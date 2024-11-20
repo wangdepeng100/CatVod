@@ -1,0 +1,59 @@
+name: Build NodeJS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # 显示所有提交的日志
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 18.17.1
+        
+    - name: Run npm build
+      working-directory: nodejs
+      run: |
+        npm i
+        npm i lodash
+        npm run build
+
+    - name: Commit NodeJS Config files
+      run: |
+        git config --global user.email "${{ secrets.GT_EMAIL }}"
+        git config --global user.name "${{ secrets.GT_ACTOR }}"
+        git commit -a -m "message"
+        checkname=$(git rev-list --max-parents=0 HEAD)
+        git checkout  $checkname -b release  ##分支不存在用这个
+        cp -r nodejs/dist ./
+        cd dist
+        git add index.config.js
+        git add index.config.js.md5
+        git add index.js
+        git add index.js.md5
+        commit_msg="* 发布 CatVodOpen新源"
+        git commit -a -m "$commit_msg"
+
+
+    - name: Push NodeJS Config Changes To Gitee
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GE_TOKEN }}
+        repository: ${{ secrets.GE_PATH }}
+        directory: .
+        branch: release
+        force: true
+        github_url: https://gitee.com
+      env:
+          GITHUB_ACTOR: ${{ secrets.GH_ACTOR }}
+        
+    - name: Archive dist
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: |
+          nodejs/dist

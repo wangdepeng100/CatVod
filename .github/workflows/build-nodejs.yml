@@ -35,7 +35,8 @@ jobs:
         git config --global user.name "${{ secrets.GT_ACTOR }}"
         cp -r nodejs/dist ./
         checkname=$(git rev-list --max-parents=0 HEAD)
-        git checkout  $checkname -b release  ##分支不存在用这个
+        git checkout -b release  ##分支不存在用这个
+        git checkout  $checkname
         cd dist
         git add index.config.js
         git add index.config.js.md5

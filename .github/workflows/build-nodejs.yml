@@ -15,7 +15,7 @@ jobs:
       with:
         node-version: 18.17.1
         
-    - name: Run npm bild
+    - name: Run npm build
       working-directory: nodejs
       run: |
         npm i

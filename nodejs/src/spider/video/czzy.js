@@ -220,6 +220,11 @@ async function play(inReq, _outResp) {
     const link = url + '/v_play/' + id + '.html';
     const html = await request(link);
     const $ = load(html);
+        
+    const headers = {
+        'User-Agent': UA,
+        'Referer': url,
+    };
     
     // const iframe = $('body iframe[src*=Cloud]');
     const iframe = $('.videoplay iframe');

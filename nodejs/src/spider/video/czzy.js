@@ -253,6 +253,7 @@ async function play(inReq, _outResp) {
             return JSON.stringify({
                 parse: 0,
                 url: list.url,
+                header: headers,
             });
         } else {
             const resultv2Match = iframeHtml.match(/var result_v2 = {(.*?)};/);
@@ -262,11 +263,13 @@ async function play(inReq, _outResp) {
                 return ({
                     parse: 0,
                     url: playUrl,
+                    header: headers,
                 });
             } else {
                 return ({
                     parse: 0,
                     url: rUrl,
+                    header: headers,
                 });
             }
         }
@@ -279,6 +282,7 @@ async function play(inReq, _outResp) {
         return JSON.stringify({
             parse: 0,
             url: playUrl,
+            header: headers,
         });
     }
 }

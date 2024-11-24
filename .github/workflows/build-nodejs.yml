@@ -26,3 +26,30 @@ jobs:
         name: dist
         path: |
           nodejs/dist
+
+    - name: Commit NodeJS Config files
+      run: |
+        git config --global user.email "${{ secrets.GT_EMAIL }}"
+        git config --global user.name "${{ secrets.GT_ACTOR }}"
+        cp -r nodejs/dist ./
+        checkname=$(git rev-list --max-parents=0 HEAD)
+        git checkout  $checkname -b release  ##分支不存在用这个
+        cd dist
+        git add index.config.js
+        git add index.config.js.md5
+        git add index.js
+        git add index.js.md5
+        git commit -a -m "发布 CatVodOpen新源"
+
+
+    - name: Push NodeJS Config Changes To Gitee
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GE_TOKEN }}
+        repository: ${{ secrets.GE_PATH }}
+        directory: .
+        branch: release
+        force: true
+        github_url: https://gitee.com
+      env:
+          GITHUB_ACTOR: ${{ secrets.GH_ACTOR }}

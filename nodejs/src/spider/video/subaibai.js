@@ -38,7 +38,7 @@ async function request(reqUrl, referer, mth, data, hd) {
 async function init(inReq, _outResp) {
     // siteKey = cfg.skey, siteType = cfg.stype
     await sliderBypass(url);
-    return cookie;
+    return {};
 }
 
 //滑动验证

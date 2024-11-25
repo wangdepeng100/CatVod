@@ -55,6 +55,9 @@ wobg: {
 czzy: {
         url: 'https://cz01.vip'
 },
+hezi: {
+        url: 'https://www.fygame.top/'
+},
 ttkx: {
     url: 'http://ttkx.live:7728/',
 },

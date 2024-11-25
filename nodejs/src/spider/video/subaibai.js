@@ -43,7 +43,7 @@ async function init(inReq, _outResp) {
 
 //滑动验证
 async function sliderBypass(url) {
-    const pro = await req(url,{
+    const pro = await req(url + '/',{
                     headers: {
                         'User-Agent': UA,
                         Referer: url + '/',

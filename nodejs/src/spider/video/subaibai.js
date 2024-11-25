@@ -38,22 +38,37 @@ async function request(reqUrl, referer, mth, data, hd) {
 async function init(inReq, _outResp) {
     // siteKey = cfg.skey, siteType = cfg.stype
     await sliderBypass(url);
-    return {};
+    return cookie;
 }
 
 //滑动验证
 async function sliderBypass(url) {
-    const pro = await request(url);
+    const pro = await req(url,{
+                    headers: {
+                        'User-Agent': UA,
+                        Referer: url + '/',
+                    },
+                });
     let proData = pro.data;
     if (proData) {
         const $ = load(proData)
         if ($('title').text() === '滑动验证') {
             let slide_js = url + $('body script').attr('src');
-            let slide_js_res = await request(slide_js);
+            let slide_js_res = await req(slide_js,{
+                    headers: {
+                        'User-Agent': UA,
+                        Referer: url + '/',
+                    },
+                });
             let vd_url = url + slide_js_res.data.match(/\/a20be899_96a6_40b2_88ba_32f1f75f1552_yanzheng_huadong\.php\?type=.*?&key=/)[0];
             let [, key, value] = slide_js_res.data.match(/key="(.*?)",value="(.*?)";/);
             vd_url = vd_url + `${key}&value=${md5encode(stringtoHex(value))}`;
-            let vd_res = await request(vd_url);
+            let vd_res = await req(vd_url,{
+                    headers: {
+                        'User-Agent': UA,
+                        Referer: url + '/',
+                    },
+                });
             cookie = vd_res.headers['set-cookie']?.[0].split(';')?.[0] ?? vd_res.headers['Set-Cookie']?.[0].split(';')?.[0];
         }
     }

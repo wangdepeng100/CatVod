@@ -114,7 +114,37 @@ async function genFilterObj(classes) {
 }
 
 async function category(inReq, _outResp) {
+    // tid, pg, filter, extend
+    const tid = inReq.body.id;
+    let pg = inReq.body.page;
+    const extend = inReq.body.filters;
 
+	if(pg <= 0) pg = 1;
+
+    const tag = extend.tag || '';
+    const area = extend.area || '';
+    const year = extend.year || '';
+    const order = extend.order || '';
+    const link = url + `/list-select-id-${tid}-type-${tag}-area-${area}-year-${year}-star--state--order-${order}-p-${pg}.html`;
+    const html = await request(link);
+    const $ = load(html);
+    const items = $('ul.list-unstyled.vod-item-img.ff-img-140 > li');
+    let videos = _.map(items, (item) => {
+        const img = $(item).find('img:first')[0];
+        const a = $(item).find('a:first')[0];
+        const jidi = $($(item).find('span.continu')[0]).text().trim();
+        return {
+            vod_id: a.attribs.href,
+            vod_name: img.attribs.alt,
+            vod_pic: img.attribs['data-original'],
+            vod_remarks: jidi ||  '',
+        };
+    });
+
+    return JSON.stringify({
+        page: parseInt(pg),
+        list: videos,
+    });
 }
 
 async function detail(inReq, _outResp) {
@@ -122,18 +152,10 @@ async function detail(inReq, _outResp) {
     const html = await request(siteUrl + id);
     let $ = load(html);
     let content = $('meta[name = description]').attr('content');
-    const play1Urls = $('ul.list-unstyled.row.text-center.ff-playurl-line.ff-playurl');
+    let roads = $('ul.list-unstyled.row.text-center.ff-playurl-line.ff-playurl');
     let playFroms = [];
-    const playUrls = [];
-    const playUrlx = _.map($(play1Urls),(play1Url) => {
-          let url = siteUrl + $(play1Url).attr('href');
-          let title = $(play1Url).text().trim();
-          return title + '$' + url;
-    }).reverse().join('#');
-    for (let i = 1; i <= 3; i++) {
-          playFroms.push('线路' + i);
-          playUrls.push(playUrlx);
-    }
+    let playUrls = [];
+  
     const videos = 
     {
       vod_content: content,

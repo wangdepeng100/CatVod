@@ -165,7 +165,7 @@ async function genFilterObj(classes) {
             name: '排序',
             value: _.map(orders, (n) => {
                 let v = n.attribs['href'] || '';
-                v = v.match(/order-(.*?)\.html/);
+                v = v.match(/order-(.*?).html/);
                 return { n: n.children[0].data, v: v };
             }),
         };
@@ -200,20 +200,15 @@ async function category(inReq, _outResp) {
         //const hdinfo = $($(item).find('div.hdinfo')[0]).text().trim();
         const jidi = $($(item).find('span.continu')[0]).text().trim();
         return {
-            vod_id: a.attribs.href.replace(/.*?\/movie\/(.*).html/g, '$1'),
+            vod_id: a.attribs.href.replace(/.*?id-(.*).html/g, '$1'),
             vod_name: img.attribs.alt,
             vod_pic: img.attribs['data-original'],
             vod_remarks: jidi ||  '',
         };
     });
 
-    const hasMore = $('div.mrb > div.pagenavi_txt > a:contains(>)').length > 0;
-    const pgCount = hasMore ? parseInt(pg) + 1 : parseInt(pg);
     return JSON.stringify({
         page: parseInt(pg),
-        pagecount: pgCount,
-        limit: 20,
-        total: 20 * pgCount,
         list: videos,
     });
 }
@@ -231,15 +226,14 @@ async function detail(inReq, _outResp) {
     const videos = [];
 
     for (const id of ids) {
-
-        const html = await request(url + '/movie/' + id + '.html');
+        const html = await request(url + `/vod-read-id-${id}.html`);
         const $ = load(html);
-        const detail = $('ul.moviedteail_list > li');
+        const detail = $('dl.dl-horizontal > dt');
         let vod = {
             vod_id: id,
-            vod_pic: $('div.dyimg img:first').attr('src'),
+            vod_pic: $('img.media-object.img-thumbnail.ff-img').attr('data-original'),
             vod_remarks: '',
-            vod_content: stripHtmlTag($('div.yp_context').html()).trim(),
+            vod_content: $('meta[name = description]').attribs.content.trim(),
         };
         for (const info of detail) {
             const i = $(info).text().trim();
@@ -259,8 +253,8 @@ async function detail(inReq, _outResp) {
                 vod.vod_lang = i.substring(3);
             }
         }
-        const playlist = _.map($('div.paly_list_btn > a'), (a) => {
-            return a.children[0].data + '$' + a.attribs.href.replace(/.*?\/v_play\/(.*).html/g, '$1');
+        const playlist = _.map($('ul.list-unstyled.row.text-center.ff-playurl-line.ff-playurl > li > a'), (a) => {
+            return a.children[0].data + '$' + a.attribs.href.replace(/.*?id-(.*).html/g, '$1');
         });
         vod.vod_play_from = key;
         vod.vod_play_url = playlist.join('#');

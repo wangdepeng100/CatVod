@@ -53,7 +53,7 @@ async function genFilterObj(classes) {
     let filterObj = {};
     for (let value of classes) {
         let typeId = value.type_id;
-        const html = await request(url + `/list-select-id-${typeId}-type--area--year--star--state--order-addtime.html`);
+        const html = await request(siteUrl + `/list-select-id-${typeId}-type--area--year--star--state--order-addtime.html`);
         const $ = load(html);
         
         //类型
@@ -125,7 +125,7 @@ async function category(inReq, _outResp) {
     const area = extend.area || '';
     const year = extend.year || '';
     const order = extend.order || '';
-    const link = url + `/list-select-id-${tid}-type-${tag}-area-${area}-year-${year}-star--state--order-${order}-p-${pg}.html`;
+    const link = siteUrl + `/list-select-id-${tid}-type-${tag}-area-${area}-year-${year}-star--state--order-${order}-p-${pg}.html`;
     const html = await request(link);
     const $ = load(html);
     const items = $('ul.list-unstyled.vod-item-img.ff-img-140 > li');

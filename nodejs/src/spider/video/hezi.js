@@ -87,107 +87,93 @@ async function init(inReq, outResp) {
 
 async function home(inReq, outResp) {
     let filterObj = {};
-    const html = await request(url + '/list-select-id-1-type--area--year--star--state--order-addtime.html');
-    const $ = load(html);
+    const classes = [{
+            type_id: '1',
+            type_name: '电影',
+        },{
+            type_id: '2',
+            type_name: '电视剧',
+        },{
+            type_id: '3',
+            type_name: '动漫',
+        },{
+            type_id: '4',
+            type_name: '综艺',
+        },{
+            type_id: '7',
+            type_name: '音乐',
+        },
+    ];
+    filterObj = await genFilterObj(classes);
     
-    //类型
-    const tags = $('dl.dl-horizontal > dd:nth-of-type(2) > a');
-    let tag = {
-        key: 'tag',
-        name: '类型',
-        value: _.map(tags, (n) => {
-            let v = n.attribs['href'] || '';
-            v = v.match(/type-(.*?)-/);
-            return { n: n.children[0].data, v: v };
-        }),
-    };
-    tag['init'] = tag.value[0].v;
-
-    //地区
-    const areas = $('dl.dl-horizontal > dd:nth-of-type(3) > a');
-    let area = {
-        key: 'area',
-        name: '地区',
-        value: _.map(areas, (n) => {
-            let v = n.attribs['href'] || '';
-            v = v.match(/area-(.*?)-/);
-            return { n: n.children[0].data, v: v };
-        }),
-    };
-    area['init'] = area.value[0].v;
-   
-    //年代
-    const years = $('dl.dl-horizontal > dd:nth-of-type(4) > a');
-    let year = {
-        key: 'year',
-        name: '年代',
-        value: _.map(years, (n) => {
-            let v = n.attribs['href'] || '';
-            v = v.match(/year-(.*?)-/);
-            return { n: n.children[0].data, v: v };
-        }),
-    };
-    year['init'] = year.value[0].v;
-    
-    //排序
-    const orders = $('dl.dl-horizontal > dd:nth-of-type(5) > a');
-    let order = {
-        key: 'order',
-        name: '排序',
-        value: _.map(orders, (n) => {
-            let v = n.attribs['href'] || '';
-            v = v.match(/order-(.*?)\.html/);
-            return { n: n.children[0].data, v: v };
-        }),
-    };
-    order['init'] = order.value[0].v;
-    
-    //分类
-    const series = $('dl.dl-horizontal > dd:nth-of-type(1) > a');
-    let classes = _.map(series, (s) => {
-        let typeId = s.attribs['href'];
-        typeId = typeId.match(/id-(.*?)-/);
-        filterObj[typeId] = [tag,area,year,order];
-        return {
-            type_id: typeId,
-            type_name: s.children[0].data,
-        };
-    });
-    const sortName = ['电影', '电视剧', '动漫', '综艺', '音乐'];
-    classes = _.sortBy(classes, (c) => {
-        const index = sortName.indexOf(c.type_name);
-        return index === -1 ? sortName.length : index;
-    });
     return JSON.stringify({
         class: classes,
         filters: filterObj,
     });
 }
 
-function genFilterObj() {
-    const classes = [
-        {
-            type_id: '1',
-            type_name: '电影',
-        },
-        {
-            type_id: '2',
-            type_name: '电视剧',
-        },
-        {
-            type_id: '3',
-            type_name: '动漫',
-        },
-        {
-            type_id: '4',
-            type_name: '综艺',
-        },
-        {
-            type_id: '7',
-            type_name: '音乐',
-        },
-    ];
+async function genFilterObj(classes) {
+    let filterObj = {};
+    for (let value of classes) {
+        let typeId = value.type_id;
+        const html = await request(url + `/list-select-id-${typeId}-type--area--year--star--state--order-addtime.html`);
+        const $ = load(html);
+        
+        //类型
+        const tags = $('dl.dl-horizontal > dd:nth-of-type(2) > a');
+        let tag = {
+            key: 'tag',
+            name: '类型',
+            value: _.map(tags, (n) => {
+                let v = n.attribs['href'] || '';
+                v = v.match(/type-(.*?)-/);
+                return { n: n.children[0].data, v: v };
+            }),
+        };
+        tag['init'] = tag.value[0].v;
     
+        //地区
+        const areas = $('dl.dl-horizontal > dd:nth-of-type(3) > a');
+        let area = {
+            key: 'area',
+            name: '地区',
+            value: _.map(areas, (n) => {
+                let v = n.attribs['href'] || '';
+                v = v.match(/area-(.*?)-/);
+                return { n: n.children[0].data, v: v };
+            }),
+        };
+        area['init'] = area.value[0].v;
+       
+        //年代
+        const years = $('dl.dl-horizontal > dd:nth-of-type(4) > a');
+        let year = {
+            key: 'year',
+            name: '年代',
+            value: _.map(years, (n) => {
+                let v = n.attribs['href'] || '';
+                v = v.match(/year-(.*?)-/);
+                return { n: n.children[0].data, v: v };
+            }),
+        };
+        year['init'] = year.value[0].v;
+        
+        //排序
+        const orders = $('dl.dl-horizontal > dd:nth-of-type(5) > a');
+        let order = {
+            key: 'order',
+            name: '排序',
+            value: _.map(orders, (n) => {
+                let v = n.attribs['href'] || '';
+                v = v.match(/order-(.*?)\.html/);
+                return { n: n.children[0].data, v: v };
+            }),
+        };
+        order['init'] = order.value[0].v;
+        
+        filterObj[typeId] = [tag,area,year,order];
+    }
+    return filterObj;
 }
 
 async function category(inReq, _outResp) {
@@ -199,21 +185,25 @@ async function category(inReq, _outResp) {
 	if(pg <= 0) pg = 1;
 
     const tag = extend.tag || '';
-    const link = url + '/movie_bt' + (tag.length > 0 ? `/movie_bt_tags/${tag}` : '') + '/movie_bt_series/' + tid + (pg > 1 ? `/page/${pg}` : '');
+    const area = extend.area || '';
+    const year = extend.year || '';
+    const order = extend.order || '';
+    const link = url + `/list-select-id-${tid}-type-${tag}-area-${area}-year-${year}-star--state--order-${order}-p-${pg}.html`;
+    
     // const link = url + "/" + tid + (extend.area || "") + (extend.year || "") + (extend.class || "") + (extend.catedd || "") + "/page/" + pg;
     const html = await request(link);
     const $ = load(html);
-    const items = $('div.mrb > ul > li');
+    const items = $('ul.list-unstyled.vod-item-img.ff-img-140 > li');
     let videos = _.map(items, (item) => {
         const img = $(item).find('img:first')[0];
         const a = $(item).find('a:first')[0];
-        const hdinfo = $($(item).find('div.hdinfo')[0]).text().trim();
-        const jidi = $($(item).find('div.jidi')[0]).text().trim();
+        //const hdinfo = $($(item).find('div.hdinfo')[0]).text().trim();
+        const jidi = $($(item).find('span.continu')[0]).text().trim();
         return {
             vod_id: a.attribs.href.replace(/.*?\/movie\/(.*).html/g, '$1'),
             vod_name: img.attribs.alt,
             vod_pic: img.attribs['data-original'],
-            vod_remarks: jidi || hdinfo || '',
+            vod_remarks: jidi ||  '',
         };
     });
 

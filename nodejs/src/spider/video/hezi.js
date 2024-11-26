@@ -1,92 +1,29 @@
-// 自动从 地址发布页 获取&跳转url地址
-// import { Crypto, load, _ } from '../../util/cat.js';
-import req from '../../util/req.js';
-
 import CryptoJS from 'crypto-js';
-import { load } from 'cheerio';
-
+import req from '../../util/req.js';
 import pkg from 'lodash';
-const { _ } = pkg;
+const {_} = pkg;
+import {load}from 'cheerio';
 
-let key = 'hezi';
-let url = '';
-let siteKey = '';
-let siteType = 0;
-const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1';
-const cookie = {};
+let siteUrl = 'http://m.ttvbox.com';
+let headers = {
+    'User-Agent': 'Mozilla/5.0 (Linux; Android 14; 22127RK46C Build/UKQ1.230804.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/118.0.0.0 Mobile Safari/537.36',
+};
 
-async function request(reqUrl, referer, mth, data, hd) {
-    const headers = {
-        'User-Agent': UA,
-        Cookie: _.map(cookie, (value, key) => {
-            return `${key}=${value}`;
-        }).join(';'),
-    };
-    if (referer) headers.referer = encodeURIComponent(referer);
+async function request(reqUrl, postData, post) {
     let res = await req(reqUrl, {
-        method: mth || 'get',
+        method: post ? 'post' : 'get',
         headers: headers,
-        data: data,
-        postType: mth === 'post' ? 'form' : '',
+        data: postData || {},
+        postType: post ? 'form' : '',
     });
-    if (res.headers['set-cookie']) {
-        const set_cookie = _.isArray(res.headers['set-cookie']) ? res.headers['set-cookie'].join(';') : res.headers['set-cookie'];
-        const cks = set_cookie.split(';');
-        for (const c of cks) {
-            const tmp = c.trim();
-            if (tmp.startsWith('result=')) {
-                cookie.result = tmp.substring(7);
-                return await request(reqUrl, reqUrl, 'post', {
-                    result: cookie.result,
-                });
-            } else if (tmp.startsWith('esc_search_captcha=1')) {
-                cookie.esc_search_captcha = 1;
-                delete cookie.result;
-                return await request(reqUrl);
-            }
-        }
-        // console.log(res.headers['set-cookie']);
-    }
-    // return res.content;
     return res.data;
 }
 
-// cfg = {skey: siteKey, ext: extend}
-async function init(inReq, outResp) {
-    // siteKey = cfg.skey;
-    // siteType = cfg.stype;
-    // url = await checkValidUrl(null);
-    // let validUrl = ext;
-
-    let html = await request(inReq.server.config.hezi.url);
-    let matches = html.matchAll(/<a href="(.*?)".*?>地址/g);
-    for (let match of matches) {
-        try {
-            let rcmdUrl = match[1];
-            let res = await req(rcmdUrl, {
-                method: 'get',
-                headers: {
-                    'User-Agent': UA,
-                },
-                redirect: 0,
-            });
-            let location = res.headers['location'];
-            if (!_.isEmpty(location)) {
-                url = location;
-            } else {
-                url = rcmdUrl;
-                break;
-            }
-        } catch(e) {
-        }
-    }
-
-    console.debug('盒子跳转地址 =====>' + url); // js_debug.log
+async function init(inReq, _outResp) {
     return {};
 }
 
-async function home(inReq, outResp) {
-    let filterObj = {};
+async function home(filter) {
     const classes = [{
             type_id: '1',
             type_name: '电影',
@@ -104,11 +41,11 @@ async function home(inReq, outResp) {
             type_name: '音乐',
         },
     ];
-    filterObj = await genFilterObj(classes);
+    let filterObj = await genFilterObj(classes);
     
-    return JSON.stringify({
+    return ({
         class: classes,
-        filters: filterObj,
+        filters: filterObj
     });
 }
 
@@ -177,278 +114,109 @@ async function genFilterObj(classes) {
 }
 
 async function category(inReq, _outResp) {
-    // tid, pg, filter, extend
-    const tid = inReq.body.id;
-    let pg = inReq.body.page;
-    const extend = inReq.body.filters;
 
-	if(pg <= 0) pg = 1;
-
-    const tag = extend.tag || '';
-    const area = extend.area || '';
-    const year = extend.year || '';
-    const order = extend.order || '';
-    const link = url + `/list-select-id-${tid}-type-${tag}-area-${area}-year-${year}-star--state--order-${order}-p-${pg}.html`;
-    
-    // const link = url + "/" + tid + (extend.area || "") + (extend.year || "") + (extend.class || "") + (extend.catedd || "") + "/page/" + pg;
-    const html = await request(link);
-    const $ = load(html);
-    const items = $('ul.list-unstyled.vod-item-img.ff-img-140 > li');
-    let videos = _.map(items, (item) => {
-        const img = $(item).find('img:first')[0];
-        const a = $(item).find('a:first')[0];
-        //const hdinfo = $($(item).find('div.hdinfo')[0]).text().trim();
-        const jidi = $($(item).find('span.continu')[0]).text().trim();
-        return {
-            vod_id: a.attribs.href.replace(/.*?id-(.*).html/g, '$1'),
-            vod_name: img.attribs.alt,
-            vod_pic: img.attribs['data-original'],
-            vod_remarks: jidi ||  '',
-        };
-    });
-
-    return JSON.stringify({
-        page: parseInt(pg),
-        list: videos,
-    });
-}
-
-function stripHtmlTag(src) {
-    return src
-        .replace(/<\/?[^>]+(>|$)/g, '')
-        .replace(/&.{1,5};/g, '')
-        .replace(/\s{2,}/g, ' ');
 }
 
 async function detail(inReq, _outResp) {
-
-    const ids = !Array.isArray(inReq.body.id) ? [inReq.body.id] : inReq.body.id;
-    const videos = [];
-
-    for (const id of ids) {
-        const html = await request(url + `/vod-read-id-${id}.html`);
-        const $ = load(html);
-        const detail = $('dl.dl-horizontal > dt');
-        let vod = {
-            vod_id: id,
-            vod_pic: $('img.media-object.img-thumbnail.ff-img').attr('data-original'),
-            vod_remarks: '',
-            vod_content: $('meta[name = description]').attribs.content.trim(),
-        };
-        for (const info of detail) {
-            const i = $(info).text().trim();
-            if (i.startsWith('地区：')) {
-                vod.vod_area = i.substring(3);
-            } else if (i.startsWith('年份：')) {
-                vod.vod_year = i.substring(3);
-            } else if (i.startsWith('导演：')) {
-                vod.vod_director = _.map($(info).find('a'), (a) => {
-                    return a.children[0].data;
-                }).join('/');
-            } else if (i.startsWith('主演：')) {
-                vod.vod_actor = _.map($(info).find('a'), (a) => {
-                    return a.children[0].data;
-                }).join('/');
-            } else if (i.startsWith('语言：')) {
-                vod.vod_lang = i.substring(3);
-            }
-        }
-        const playlist = _.map($('ul.list-unstyled.row.text-center.ff-playurl-line.ff-playurl > li > a'), (a) => {
-            return a.children[0].data + '$' + a.attribs.href.replace(/.*?id-(.*).html/g, '$1');
-        });
-        vod.vod_play_from = key;
-        vod.vod_play_url = playlist.join('#');
-        videos.push(vod);
-    }
-    
-    return {
-        list: videos,
-    };
-}
-
-// var parse = [];
-async function play(inReq, _outResp) {
     const id = inReq.body.id;
-
-    const link = url + '/v_play/' + id + '.html';
-    const html = await request(link);
-    const $ = load(html);
-        
-    const headers = {
-        'User-Agent': UA,
-        'Referer': url,
-    };
-    
-    // const iframe = $('body iframe[src*=Cloud]');
-    const iframe = $('.videoplay iframe');
-    if (iframe.length > 0) {
-        const rUrl = iframe[0].attribs.src;
-
-        // 请求
-        const iframeHtml = (
-            await req(rUrl, {
-                headers: {
-                    Referer: link,
-                    'User-Agent': UA,
-                },
-            })
-        ).data;
-
-        const rand = iframeHtml.match(/var rand = "(.*?)"/); // .split('').reverse().join('');
-        const encrypted = iframeHtml.match(/var player = "(.*?)"/); // .split('').reverse().join('');
-        if (!_.isEmpty(rand) && !_.isEmpty(encrypted)){
-            const key = CryptoJS.enc.Utf8.parse('VFBTzdujpR9FWBhe');
-            const iv = CryptoJS.enc.Utf8.parse(rand);
-
-            const decrypted = decryptPlayer(encrypted[1], 'VFBTzdujpR9FWBhe', rand[1]);
-
-            const list = JSON.parse(decrypted);
-            return JSON.stringify({
-                parse: 0,
-                url: list.url,
-                header: headers,
-            });
-        } else {
-            const resultv2Match = iframeHtml.match(/var result_v2 = {(.*?)};/);
-            if (!_.isEmpty(resultv2Match)) {
-                const resultv2 = JSON.parse('{' + resultv2Match[1] + '}');
-                const playUrl = decryptResultV2(resultv2.data);
-                return ({
-                    parse: 0,
-                    url: playUrl,
-                    header: headers,
-                });
-            } else {
-                return ({
-                    parse: 0,
-                    url: rUrl,
-                    header: headers,
-                });
-            }
-        }
-    } else {
-        const js = $('script:contains(window.wp_nonce)').html();
-        const group = js.match(/(var.*)eval\((\w*\(\w*\))\)/);
-        const md5 = CryptoJS;
-        const result = eval(group[1] + group[2]);
-        const playUrl = result.match(/url:.*?['"](.*?)['"]/)[1];
-        return JSON.stringify({
-            parse: 0,
-            url: playUrl,
-            header: headers,
-        });
+    const html = await request(siteUrl + id);
+    let $ = load(html);
+    let content = $('meta[name = description]').attr('content');
+    const play1Urls = $('ul.list-unstyled.row.text-center.ff-playurl-line.ff-playurl');
+    let playFroms = [];
+    const playUrls = [];
+    const playUrlx = _.map($(play1Urls),(play1Url) => {
+          let url = siteUrl + $(play1Url).attr('href');
+          let title = $(play1Url).text().trim();
+          return title + '$' + url;
+    }).reverse().join('#');
+    for (let i = 1; i <= 3; i++) {
+          playFroms.push('线路' + i);
+          playUrls.push(playUrlx);
     }
-}
-
-function decryptPlayer(text, key, iv) {
-    const keyData = CryptoJS.enc.Utf8.parse(key || 'PBfAUnTdMjNDe6pL');
-    const ivData = CryptoJS.enc.Utf8.parse(iv || 'sENS6bVbwSfvnXrj');
-    const content = CryptoJS.AES.decrypt(text, keyData, {
-        iv: ivData,
-        padding: CryptoJS.pad.Pkcs7
-    }).toString(CryptoJS.enc.Utf8);
-    return content;
-
-    /* 原来的解密
-    var decrypted = CryptoJS.AES.decrypt(encrypted, key, {
-        iv: iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7
-    });
-    
-    // 转换为 utf8 字符串
-    decrypted = CryptoJS.enc.Utf8.stringify(decrypted);*/
-}
-
-function decryptResultV2(text) {
-    const data = text.split('').reverse().join('');
-    const hexData = CryptoJS.enc.Hex.parse(data);
-    const decoded = hexData.toString(CryptoJS.enc.Utf8);
-    const pos = (decoded.length - 7) / 2;
-    const firstPart = decoded.substring(0, pos);
-    const secondPart = decoded.substring(pos + 7);
-    return firstPart + secondPart;
+    const videos = 
+    {
+      vod_content: content,
+      vod_play_from: playFroms.join('$$$'),
+      vod_play_url: playUrls.join('$$$'),
+    };
+    return {
+        list: [videos]
+    };
 }
 
 async function search(inReq, _outResp) {
-    const pg = inReq.body.page;
     const wd = inReq.body.wd;
-    let page = pg || 1;
-    if (page == 0) page = 1;
+    let url = siteUrl + '/index.php?s=vod-search-name';
+    const html = await request(url, `wd=${wd}`, true);
+    const $ = load(html);
+    let data = $('ul.list-unstyled.vod-item-img.ff-img-140 > li');
+    let videos = _.map(data, (n) => {
+        let id = $($(n)
+            .find('p.img > a')[0])
+            .attr('href');
+        let pic = $($(n)
+            .find('p.img > a > img')[0])
+            .attr('data-original');
+        let name = $($(n)
+            .find('p.img > a > img')[0])
+            .attr('alt');
+        return {
+            vod_id: id,
+            vod_name: name,
+            vod_pic: pic,
+            vod_remarks: '',
+        };
+    });
+    return ({
+        list: videos,
+    });
+}
 
-    const html = await request('https://menglv.serv00.net/czzysearch.php?wd=' + wd);
-    let videos = [];
-    // for (const vod of data.data) {
-    if (!_.isEmpty(html) && html != '0 结果') {
-        const records = html.split('$$$');
-        for (const vod of records) {
-            const filed = vod.split('|');
-            videos.push({
-                vod_id: filed[0],
-                vod_name: filed[1],
-                vod_pic: filed[2],
-                vod_remarks: filed[3],
-            });
-        }
-        return JSON.stringify({
-            page: page,
-            list: videos,
-        });
-    }
+async function sniff(inReq, _outResp) {
+    
+}
 
+async function play(inReq, _outResp) {
+    
 }
 
 
-    // 原open.js搜索也是失效,提示: You are unable to access
-    // const html = await request(url + '/xsseanmch/?q=' + wd);
-    /*
-    const html = await request(url + '/?s=' + wd);
-    const $ = load(html);
-    const items = $('div.search_list > ul > li');
-    let videos = _.map(items, (item) => {
-        const img = $(item).find('img:first')[0];
-        const a = $(item).find('a:first')[0];
-        const hdinfo = $($(item).find('div.hdinfo')[0]).text().trim();
-        const jidi = $($(item).find('div.jidi')[0]).text().trim();
-        return {
-            vod_id: a.attribs.href.replace(/.*?\/movie\/(.*).html/g, '$1'),
-            vod_name: img.attribs.alt,
-            vod_pic: img.attribs['data-original'],
-            vod_remarks: jidi || hdinfo || '',
-        };
-    });
-    return JSON.stringify({
-        list: videos,
-    });*/
 
 
 async function test(inReq, outResp) {
     try {
-        const printErr = function (json) {
+        const printErr = function(json) {
             if (json.statusCode && json.statusCode == 500) {
                 console.error(json);
             }
         };
         const prefix = inReq.server.prefix;
         const dataResult = {};
-        let resp = await inReq.server.inject().post(`${prefix}/init`);
+        let resp = await inReq.server.inject()
+            .post(`${prefix}/init`);
         dataResult.init = resp.json();
         printErr(resp.json());
-        resp = await inReq.server.inject().post(`${prefix}/home`);
+        resp = await inReq.server.inject()
+            .post(`${prefix}/home`);
         dataResult.home = resp.json();
-        printErr("" + resp.json());
-        if (dataResult.home.class.length > 0) {
-            resp = await inReq.server.inject().post(`${prefix}/category`).payload({
-                id: dataResult.home.class[0].type_id,
+        printErr(resp.json());
+        if (dataResult.home.class && dataResult.home.class.length > 0) {
+            resp = await inReq.server.inject()
+                .post(`${prefix}/category`)
+                .payload({
+                id: dataResult.home.class[1].type_id,
                 page: 1,
                 filter: true,
                 filters: {},
             });
             dataResult.category = resp.json();
             printErr(resp.json());
-            if (dataResult.category.list.length > 0) {
-                resp = await inReq.server.inject().post(`${prefix}/detail`).payload({
-                    id: dataResult.category.list[2].vod_id, // dataResult.category.list.map((v) => v.vod_id),
+            if (dataResult.category.list && dataResult.category.list.length > 0) {
+                resp = await inReq.server.inject()
+                    .post(`${prefix}/detail`)
+                    .payload({
+                    id: dataResult.category.list[0].vod_id, // dataResult.category.list.map((v) => v.vod_id),
                 });
                 dataResult.detail = resp.json();
                 printErr(resp.json());
@@ -460,21 +228,24 @@ async function test(inReq, outResp) {
                         for (let j = 0; j < flags.length; j++) {
                             const flag = flags[j];
                             const urls = ids[j].split('#');
-                            console.log(urls);
                             for (let i = 0; i < urls.length && i < 2; i++) {
-                                resp = await inReq.server.inject().post(`${prefix}/play`).payload({
+                                resp = await inReq.server.inject()
+                                    .post(`${prefix}/play`)
+                                    .payload({
                                     flag: flag,
                                     id: urls[i].split('$')[1],
                                 });
-                                dataResult.play.push(resp.json());
+                                dataResult.play.push(resp);
                             }
                         }
                     }
                 }
             }
         }
-        resp = await inReq.server.inject().post(`${prefix}/search`).payload({
-            wd: '爱',
+        resp = await inReq.server.inject()
+            .post(`${prefix}/search`)
+            .payload({
+            wd: '仙逆',
             page: 1,
         });
         dataResult.search = resp.json();
@@ -483,7 +254,10 @@ async function test(inReq, outResp) {
     } catch (err) {
         console.error(err);
         outResp.code(500);
-        return { err: err.message, tip: 'check debug console output' };
+        return {
+            err: err.message,
+            tip: 'check debug console output'
+        };
     }
 }
 
@@ -493,10 +267,11 @@ export default {
         name: '🟢 盒子',
         type: 3,
     },
-    api: async (fastify) => {
+    api: async(fastify) => {
         fastify.post('/init', init);
         fastify.post('/home', home);
         fastify.post('/category', category);
+        fastify.post('/sniff', sniff);
         fastify.post('/detail', detail);
         fastify.post('/play', play);
         fastify.post('/search', search);

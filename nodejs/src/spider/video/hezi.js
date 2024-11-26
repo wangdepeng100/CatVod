@@ -89,28 +89,71 @@ async function home(inReq, outResp) {
     let filterObj = {};
     const html = await request(url + '/list-select-id-1-type--area--year--star--state--order-addtime.html');
     const $ = load(html);
-    const tags = $('div#beautiful-taxonomy-filters-tax-movie_bt_tags > a');
+    
+    //类型
+    const tags = $('dl.dl-horizontal > dd:nth-of-type(2) > a');
     let tag = {
         key: 'tag',
         name: '类型',
         value: _.map(tags, (n) => {
-            let v = n.attribs['cat-url'] || '';
-            v = v.substring(v.lastIndexOf('/') + 1);
+            let v = n.attribs['href'] || '';
+            v = v.match(/type-(.*?)-/);
             return { n: n.children[0].data, v: v };
         }),
     };
     tag['init'] = tag.value[0].v;
-    const series = $('div#beautiful-taxonomy-filters-tax-movie_bt_series > a[cat-url*=movie_bt_series]');
+
+    //地区
+    const areas = $('dl.dl-horizontal > dd:nth-of-type(3) > a');
+    let area = {
+        key: 'area',
+        name: '地区',
+        value: _.map(areas, (n) => {
+            let v = n.attribs['href'] || '';
+            v = v.match(/area-(.*?)-/);
+            return { n: n.children[0].data, v: v };
+        }),
+    };
+    area['init'] = area.value[0].v;
+   
+    //年代
+    const years = $('dl.dl-horizontal > dd:nth-of-type(4) > a');
+    let year = {
+        key: 'year',
+        name: '年代',
+        value: _.map(years, (n) => {
+            let v = n.attribs['href'] || '';
+            v = v.match(/year-(.*?)-/);
+            return { n: n.children[0].data, v: v };
+        }),
+    };
+    year['init'] = year.value[0].v;
+    
+    //排序
+    const orders = $('dl.dl-horizontal > dd:nth-of-type(5) > a');
+    let order = {
+        key: 'order',
+        name: '排序',
+        value: _.map(orders, (n) => {
+            let v = n.attribs['href'] || '';
+            v = v.match(/order-(.*?)\.html/);
+            return { n: n.children[0].data, v: v };
+        }),
+    };
+    order['init'] = order.value[0].v;
+    
+    //分类
+    const series = $('dl.dl-horizontal > dd:nth-of-type(1) > a');
     let classes = _.map(series, (s) => {
-        let typeId = s.attribs['cat-url'];
-        typeId = typeId.substring(typeId.lastIndexOf('/') + 1);
-        filterObj[typeId] = [tag];
+        let typeId = s.attribs['href'];
+        typeId = typeId.match(/id-(.*?)-/);
+        filterObj[typeId] = [tag,area,year,order];
         return {
             type_id: typeId,
             type_name: s.children[0].data,
         };
     });
-    const sortName = ['电影', '电视剧', '国产剧', '美剧', '韩剧', '日剧', '海外剧（其他）', '华语电影', '印度电影', '日本电影', '欧美电影', '韩国电影', '动画', '俄罗斯电影', '加拿大电影'];
+    const sortName = ['电影', '电视剧', '动漫', '综艺', '音乐'];
     classes = _.sortBy(classes, (c) => {
         const index = sortName.indexOf(c.type_name);
         return index === -1 ? sortName.length : index;

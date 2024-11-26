@@ -87,7 +87,7 @@ async function init(inReq, outResp) {
 
 async function home(inReq, outResp) {
     let filterObj = {};
-    const html = await request(url + '/movie_bt');
+    const html = await request(url + '/list-select-id-1-type--area--year--star--state--order-addtime.html');
     const $ = load(html);
     const tags = $('div#beautiful-taxonomy-filters-tax-movie_bt_tags > a');
     let tag = {

@@ -47,6 +47,7 @@ async function search(inReq, _outResp) {
         headers: {
             'User-Agent': UA,
             'Content-Type': 'application/x-www-form-urlencoded',
+            'timeout': 6000,
         },
         data: `wd=${wd}`,
         postType: 'form',

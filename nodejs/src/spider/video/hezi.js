@@ -7,7 +7,6 @@ import {load}from 'cheerio';
 let siteUrl = 'http://m.ttvbox.com';
 let headers = {
     'User-Agent': 'Mozilla/5.0 (Linux; Android 14; 22127RK46C Build/UKQ1.230804.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/118.0.0.0 Mobile Safari/537.36',
-    'Connection': 'keep-alive',
 };
 
 async function request(reqUrl, postData, post) {

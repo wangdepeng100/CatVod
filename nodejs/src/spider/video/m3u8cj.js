@@ -11,7 +11,7 @@ async function request(reqUrl, timeout = 6000) {
     try {
         let res = await req(reqUrl, {
             method: 'get',
-            timeout: timeout
+
         });
         return res.data;
     } catch (error) {

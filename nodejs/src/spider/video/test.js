@@ -41,7 +41,7 @@ async function detail(inReq, _outResp) {
 
 async function search(inReq, _outResp) {
     const wd = inReq.body.wd;
-    let url = siteUrl + '/index.php?s=vod-search-name';
+    let url = host + '/index.php?s=vod-search-name';
     const html = await req(url, {
         method: 'post',
         headers: {

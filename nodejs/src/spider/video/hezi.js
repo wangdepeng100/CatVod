@@ -41,7 +41,7 @@ async function home(filter) {
             type_name: '音乐',
         },
     ];
-    let filterObj = await genFilterObj(classes);
+    let filterObj = {};
     
     return ({
         class: classes,

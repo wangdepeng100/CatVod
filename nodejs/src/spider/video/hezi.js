@@ -15,6 +15,7 @@ async function request(reqUrl, postData, post) {
         headers: headers,
         data: postData || {},
         postType: post ? 'form' : '',
+        timeout:6000,
     });
     return res.data;
 }

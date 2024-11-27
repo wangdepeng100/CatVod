@@ -46,14 +46,13 @@ async function search(inReq, _outResp) {
         method: 'post',
         headers: {
             'User-Agent': UA,
-            'Content-Type': 'Content-Type',
+            'Content-Type': 'application/x-www-form-urlencoded',
         },
-        data: {
-            wd=${wd},
-        }
+        data: `wd=${wd}`,
         postType: 'form',
     });
     const $ = load(html);
+    return {};
 }
 
 async function sniff(inReq, _outResp) {

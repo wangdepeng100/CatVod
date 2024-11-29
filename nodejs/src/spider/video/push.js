@@ -42,7 +42,7 @@ async function sniff(inReq, _outResp) {
                 )
                 .replaceAll(`autoplay: false`, `autoplay: true`)
                 .replaceAll(`<video`, `<video autoplay=true `);
-        } else if (inReq.body.url.indexOf('video_mp4') > 0 || inReq.body.url.indexOf('.m3u8') > 0) {
+        } else if (inReq.body.url.indexOf('video_mp4') > 0 ) {
             _outResp.header('sniff_end', '1');
             return 'block';
         }
@@ -80,8 +80,7 @@ async function play0(inReq, _outResp){
     const result = await play(inReq, _outResp);
     if(!result){
         const id = inReq.body.id;
-        //if (id.startsWith('https://m.nmddd.com/vod-play')) {
-        if (id.indexof('.html') > 0) {
+        if (id.startsWith('https://m.nmddd.com/vod-play')) {
             const sniffer = await inReq.server.messageToDart({
                 action: 'sniff',
                 opt: {

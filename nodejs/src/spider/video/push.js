@@ -42,7 +42,7 @@ async function sniff(inReq, _outResp) {
                 )
                 .replaceAll(`autoplay: false`, `autoplay: true`)
                 .replaceAll(`<video`, `<video autoplay=true `);
-        } else if (inReq.body.url.indexOf('video_mp4') > 0) {
+        } else if (inReq.body.url.indexOf('video_mp4') > 0 || inReq.body.url.indexOf('.m3u8') > 0) {
             _outResp.header('sniff_end', '1');
             return 'block';
         }
@@ -56,19 +56,19 @@ async function detail(inReq, _outResp) {
     const videos = [];
     const regex = new RegExp('/s/');
     for (const id of ids) {
-    let vod = {
-            vod_id: id,
-            vod_content: id,
-            vod_name: '推送',
-            vod_pic: 'https://pic.rmb.bdstatic.com/bjh/1d0b02d0f57f0a42201f92caba5107ed.jpeg',
-        };
-    if(!regex.test(id)){
-        vod.vod_play_from = '推送';
-        vod.vod_play_url = '测试$' + id;
-        videos.push(vod);
-    }
-    else{
-        videos.push(await detail0(shareUrls ,vod));
+        let vod = {
+                vod_id: id,
+                vod_content: id,
+                vod_name: '推送',
+                vod_pic: 'https://pic.rmb.bdstatic.com/bjh/1d0b02d0f57f0a42201f92caba5107ed.jpeg',
+            };
+        if(!regex.test(id)){
+            vod.vod_play_from = '推送';
+            vod.vod_play_url = '测试$' + id;
+            videos.push(vod);
+        }
+        else{
+            videos.push(await detail0(shareUrls ,vod));
         }
     }
     return {
@@ -77,30 +77,31 @@ async function detail(inReq, _outResp) {
 }
 
 async function play0(inReq, _outResp){
-        const result = await play(inReq, _outResp);
-        if(!result){
+    const result = await play(inReq, _outResp);
+    if(!result){
         const id = inReq.body.id;
-        if (id.startsWith('https://m.nmddd.com/vod-play')) {
-        const sniffer = await inReq.server.messageToDart({
-            action: 'sniff',
-            opt: {
-                ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
-                url: id,
-                timeout: 10000,
-                // rule: 'xxxxxxx'
-                intercept: inReq.server.address().url + inReq.server.prefix + '/sniff',
-            },
-        });
-        if (sniffer && sniffer.url) {
-            return {
-                parse: 0,
-                url: sniffer.url,
-            };
+        //if (id.startsWith('https://m.nmddd.com/vod-play')) {
+        if (id.indexof('.html') > 0) {
+            const sniffer = await inReq.server.messageToDart({
+                action: 'sniff',
+                opt: {
+                    ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+                    url: id,
+                    timeout: 10000,
+                    // rule: 'xxxxxxx'
+                    intercept: inReq.server.address().url + inReq.server.prefix + '/sniff',
+                },
+            });
+            if (sniffer && sniffer.url) {
+                return {
+                    parse: 0,
+                    url: sniffer.url,
+                };
+            }
         }
-    }
-    return {
-            parse: 0,
-            url: id,
+        return {
+                parse: 0,
+                url: id,
         };
     }
     else

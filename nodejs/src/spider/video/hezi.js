@@ -166,19 +166,19 @@ async function detail(inReq, _outResp) {
     for (const info of detail) {
         const i = $(info).text().trim();
         if (i.startsWith('地区：')) {
-            vod.vod_area = _map($(info).find('+ dd').find('a'), (a) =>{
+            vod.vod_area = _.map($(info).find('+ dd').find('a'), (a) =>{
                 return a.children[0].data }).join('/');
         } else if (i.startsWith('年份：')) {
-            vod.vod_year = _map($(info).find('+ dd').find('a'), (a) =>{
+            vod.vod_year = _.map($(info).find('+ dd').find('a'), (a) =>{
                 return a.children[0].data }).join('/');
         } else if (i.startsWith('导演：')) {
-            vod.vod_director = _map($(info).find('+ dd').find('a'), (a) =>{
+            vod.vod_director = _.map($(info).find('+ dd').find('a'), (a) =>{
                 return a.children[0].data }).join('/');
         } else if (i.startsWith('主演：')) {
-            vod.vod_actor = _map($(info).find('+ dd').find('a'), (a) =>{
+            vod.vod_actor = _.map($(info).find('+ dd').find('a'), (a) =>{
                 return a.children[0].data }).join('/');
         } else if (i.startsWith('语言：')) {
-            vod.vod_lang = _map($(info).find('+ dd').find('a'), (a) =>{
+            vod.vod_lang = _.map($(info).find('+ dd').find('a'), (a) =>{
                 return a.children[0].data }).join('/');
         }
     }

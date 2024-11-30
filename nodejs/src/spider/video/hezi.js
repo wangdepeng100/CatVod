@@ -103,9 +103,9 @@ async function genFilterObj(classes) {
             key: 'order',
             name: '排序',
             value:[
-                {'最近热播': 'hits'},
-                {'最新上映': 'addtime'},
-                {'点赞最多': 'up'}
+                {'n': '最近热播', 'v': 'hits'},
+                {'n': '最新上映', 'v': 'addtime'},
+                {'n': '点赞最多', 'v': 'up'}
             ]
         };
         order['init'] = order.value[0];

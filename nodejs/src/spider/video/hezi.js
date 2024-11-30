@@ -4,9 +4,10 @@ import pkg from 'lodash';
 const {_} = pkg;
 import {load}from 'cheerio';
 
-let siteUrl = 'http://m.ttvbox.com';
+let host = 'http://m.ttvbox.com';
+let UA = 'Mozilla/5.0 (Linux; Android 14; 22127RK46C Build/UKQ1.230804.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/118.0.0.0 Mobile Safari/537.36';
 let headers = {
-    'User-Agent': 'Mozilla/5.0 (Linux; Android 14; 22127RK46C Build/UKQ1.230804.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/118.0.0.0 Mobile Safari/537.36',
+    'User-Agent': UA
 };
 
 async function request(reqUrl, postData, post) {
@@ -23,7 +24,9 @@ async function init(inReq, _outResp) {
     return {};
 }
 
-async function home(filter) {
+//await home({},{});
+async function home(inReq, outResp) {
+    let filterObj = {};
     const classes = [{
             type_id: '1',
             type_name: '电影',
@@ -41,11 +44,11 @@ async function home(filter) {
             type_name: '音乐',
         },
     ];
-    let filterObj = {};
+    filterObj = await genFilterObj(classes);
     
-    return ({
+    return JSON.stringify({
         class: classes,
-        filters: filterObj
+        filters: filterObj,
     });
 }
 
@@ -53,7 +56,7 @@ async function genFilterObj(classes) {
     let filterObj = {};
     for (let value of classes) {
         let typeId = value.type_id;
-        const html = await request(siteUrl + `/list-select-id-${typeId}-type--area--year--star--state--order-addtime.html`);
+        const html = await request(host + `/list-select-id-${typeId}-type--area--year--star--state--order-addtime.html`);
         const $ = load(html);
         
         //类型
@@ -63,7 +66,7 @@ async function genFilterObj(classes) {
             name: '类型',
             value: _.map(tags, (n) => {
                 let v = n.attribs['href'] || '';
-                v = v.match(/type-(.*?)-/);
+                v = v.match(/type-(.*?)-/)[1];
                 return { n: n.children[0].data, v: v };
             }),
         };
@@ -76,7 +79,7 @@ async function genFilterObj(classes) {
             name: '地区',
             value: _.map(areas, (n) => {
                 let v = n.attribs['href'] || '';
-                v = v.match(/area-(.*?)-/);
+                v = v.match(/area-(.*?)-/)[1];
                 return { n: n.children[0].data, v: v };
             }),
         };
@@ -89,30 +92,30 @@ async function genFilterObj(classes) {
             name: '年代',
             value: _.map(years, (n) => {
                 let v = n.attribs['href'] || '';
-                v = v.match(/year-(.*?)-/);
+                v = v.match(/year-(.*?)-/)[1];
                 return { n: n.children[0].data, v: v };
             }),
         };
         year['init'] = year.value[0].v;
         
         //排序
-        const orders = $('dl.dl-horizontal > dd:nth-of-type(5) > a');
         let order = {
             key: 'order',
             name: '排序',
-            value: _.map(orders, (n) => {
-                let v = n.attribs['href'] || '';
-                v = v.match(/order-(.*?).html/);
-                return { n: n.children[0].data, v: v };
-            }),
+            value:[
+                {'最近热播': 'hits'},
+                {'最新上映': 'addtime'},
+                {'点赞最多': 'up'}
+            ]
         };
-        order['init'] = order.value[0].v;
+        order['init'] = order.value[0];
         
         filterObj[typeId] = [tag,area,year,order];
     }
     return filterObj;
 }
 
+//await category({body: {id: '1', page: '1',filters: {tag: '', area: '', year: '', order: 'addtime'}}})
 async function category(inReq, _outResp) {
     // tid, pg, filter, extend
     const tid = inReq.body.id;
@@ -125,19 +128,19 @@ async function category(inReq, _outResp) {
     const area = extend.area || '';
     const year = extend.year || '';
     const order = extend.order || '';
-    const link = siteUrl + `/list-select-id-${tid}-type-${tag}-area-${area}-year-${year}-star--state--order-${order}-p-${pg}.html`;
+    const link = host + `/list-select-id-${tid}-type-${tag}-area-${area}-year-${year}-star--state--order-${order}-p-${pg}.html`;
     const html = await request(link);
     const $ = load(html);
     const items = $('ul.list-unstyled.vod-item-img.ff-img-140 > li');
     let videos = _.map(items, (item) => {
         const img = $(item).find('img:first')[0];
         const a = $(item).find('a:first')[0];
-        const jidi = $($(item).find('span.continu')[0]).text().trim();
+        const continu = $($(item).find('span.continu')[0]).text().trim();
         return {
             vod_id: a.attribs.href,
             vod_name: img.attribs.alt,
             vod_pic: img.attribs['data-original'],
-            vod_remarks: jidi ||  '',
+            vod_remarks: continu ||  '',
         };
     });
 
@@ -147,47 +150,73 @@ async function category(inReq, _outResp) {
     });
 }
 
+//await detail({body: {id: '/vod-read-id-177355.html'}});
 async function detail(inReq, _outResp) {
     const id = inReq.body.id;
-    const html = await request(siteUrl + id);
+    const videos = [];
+    const html = await request(host + id);
     let $ = load(html);
-    let content = $('meta[name = description]').attr('content');
-    let roads = $('ul.list-unstyled.row.text-center.ff-playurl-line.ff-playurl');
-    let playFroms = [];
-    let playUrls = [];
-  
-    const videos = 
-    {
-      vod_content: content,
-      vod_play_from: playFroms.join('$$$'),
-      vod_play_url: playUrls.join('$$$'),
+    const detail = $('dl.dl-horizontal > dt');
+    let vod = {
+        vod_id: id,
+        vod_pic: $('img.media-object.img-thumbnail.ff-img').attr('data-original'),
+        vod_remarks: '',
+        vod_content: $('meta[name = description]').text().trim(),
     };
+    for (const info of detail) {
+        const i = $(info).text().trim();
+        if (i.startsWith('地区：')) {
+            vod.vod_area = i.substring(3);
+        } else if (i.startsWith('年份：')) {
+            vod.vod_year = i.substring(3);
+        } else if (i.startsWith('导演：')) {
+            vod.vod_director = _.map($(info).find('a'), (a) => {
+                return a.children[0].data;
+            }).join('/');
+        } else if (i.startsWith('主演：')) {
+            vod.vod_actor = _.map($(info).find('a'), (a) => {
+                return a.children[0].data;
+            }).join('/');
+        } else if (i.startsWith('语言：')) {
+            vod.vod_lang = i.substring(3);
+        }
+    }
+    const playlist = _.map($('ul.list-unstyled.row.text-center.ff-playurl-line.ff-playurl').find('list:first').find('a'), (a) => {
+        return a.children[0].data + '$' + a.attribs.href;
+    });
+    vod.vod_play_from = '盒子影视';
+    vod.vod_play_url = playlist.join('#');
+    videos.push(vod);
+
     return {
         list: [videos]
     };
 }
-
+//await search({body: {wd: '都市'}});
 async function search(inReq, _outResp) {
     const wd = inReq.body.wd;
-    let url = siteUrl + '/index.php?s=vod-search-name';
+    let url = host + '/index.php?s=vod-search-name';
     const html = await request(url, `wd=${wd}`, true);
     const $ = load(html);
     let data = $('ul.list-unstyled.vod-item-img.ff-img-140 > li');
     let videos = _.map(data, (n) => {
         let id = $($(n)
-            .find('p.img > a')[0])
+            .find('p.image > a')[0])
             .attr('href');
         let pic = $($(n)
-            .find('p.img > a > img')[0])
+            .find('p.image > a > img')[0])
             .attr('data-original');
         let name = $($(n)
-            .find('p.img > a > img')[0])
+            .find('p.image > a > img')[0])
             .attr('alt');
+        let continu = $($(n)
+            .find('p.image span')[0])
+            .text().trim();
         return {
             vod_id: id,
             vod_name: name,
             vod_pic: pic,
-            vod_remarks: '',
+            vod_remarks: continu,
         };
     });
     return ({
@@ -196,14 +225,63 @@ async function search(inReq, _outResp) {
 }
 
 async function sniff(inReq, _outResp) {
-    
+    if (inReq.body.action == 'request') {
+        if (inReq.body.url.indexOf('.html') > 0 || inReq.body.url.indexOf('url=') > 0) {
+            const resp = await req.get(inReq.body.url, {
+                headers: inReq.body.headers,
+            });
+            const respHeaders = resp.headers.toJSON();
+            delete respHeaders['transfer-encoding'];
+            delete respHeaders['cache-control'];
+            delete respHeaders['content-length'];
+            if (respHeaders['content-encoding'] == 'gzip') {
+                delete respHeaders['content-encoding'];
+            }
+            _outResp.headers(respHeaders);
+            return resp.data.replaceAll(`var p = navigator.platform;`, `var p ='';`)
+                .replaceAll(
+                `</html>`,
+                `<script>
+            const loop1 = setInterval(function () {
+              if (
+                document.querySelectorAll('[onclick*=playlist]').length > 0 &&
+                window.playlist
+              ) {
+                clearInterval(loop1);
+                document.querySelectorAll('[onclick*=playlist]')[${vSrcIdx-1}].click();
+                return;
+              }
+            }, 200);</script></html>`)
+                .replaceAll(`autoplay: false`, `autoplay: true`)
+                .replaceAll(`<video`, `<video autoplay=true `);
+        } else if (inReq.body.url.indexOf('video_mp4') > 0 || inReq.body.url.indexOf('index.m3u8') >= 0) {
+            _outResp.header('sniff_end', '1');
+            return 'block';
+        }
+    }
+    return '';
 }
 
+//await play({body: {id: '/vod-play-id-178008-sid-2-pid-1.html'}})
 async function play(inReq, _outResp) {
-    
+    let id = inReq.body.id;
+    const sniffer = await inReq.server.messageToDart({
+        action: 'sniff',
+        opt: {
+            ua:  UA,
+            url: id,
+            timeout: 5000,
+            // rule: 'xxxxxxx'
+            intercept: inReq.server.address().url + inReq.server.prefix + '/sniff',
+        },
+    });
+    if (sniffer && sniffer.url) {
+        return {
+            parse: 0,
+            url: sniffer.url,
+        };
+    }
 }
-
-
 
 
 async function test(inReq, outResp) {

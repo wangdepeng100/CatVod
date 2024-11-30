@@ -249,7 +249,7 @@ async function sniff(inReq, _outResp) {
                 window.playlist
               ) {
                 clearInterval(loop1);
-                document.querySelectorAll('[onclick*=playlist]')[${vSrcIdx-1}].click();
+                document.querySelectorAll('[onclick*=playlist]')[0].click();
                 return;
               }
             }, 200);</script></html>`)

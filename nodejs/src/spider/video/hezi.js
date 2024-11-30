@@ -181,7 +181,8 @@ async function detail(inReq, _outResp) {
             vod.vod_lang = i.substring(3);
         }
     }
-    const playlist = _.map($('ul.list-unstyled.row.text-center.ff-playurl-line.ff-playurl').find('list:first').find('a'), (a) => {
+    let playUrls = $($('ul.list-unstyled.row.text-center.ff-playurl-line.ff-playurl')[0]).find('li > a');
+    const playlist = _.map(playUrls, (a) => {
         return a.children[0].data + '$' + a.attribs.href;
     });
     vod.vod_play_from = '盒子影视';
@@ -189,7 +190,7 @@ async function detail(inReq, _outResp) {
     videos.push(vod);
 
     return {
-        list: [videos]
+        list: videos
     };
 }
 //await search({body: {wd: '都市'}});
@@ -216,7 +217,7 @@ async function search(inReq, _outResp) {
             vod_id: id,
             vod_name: name,
             vod_pic: pic,
-            vod_remarks: continu,
+            vod_remarks: continu
         };
     });
     return ({
@@ -345,7 +346,7 @@ async function test(inReq, outResp) {
         resp = await inReq.server.inject()
             .post(`${prefix}/search`)
             .payload({
-            wd: '仙逆',
+            wd: '都市',
             page: 1,
         });
         dataResult.search = resp.json();

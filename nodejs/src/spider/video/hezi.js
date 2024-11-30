@@ -161,24 +161,26 @@ async function detail(inReq, _outResp) {
         vod_id: id,
         vod_pic: $('img.media-object.img-thumbnail.ff-img').attr('data-original'),
         vod_remarks: '',
-        vod_content: $('meta[name = description]').text().trim(),
+        vod_content: $('meta[name = description]').attr('content').trim(),
     };
     for (const info of detail) {
         const i = $(info).text().trim();
         if (i.startsWith('地区：')) {
-            vod.vod_area = i.substring(3);
+            vod.vod_area = _map($(info).find('+ dd').find('a'), (a) =>{
+                return a.children[0].data }).join('/');
         } else if (i.startsWith('年份：')) {
-            vod.vod_year = i.substring(3);
+            vod.vod_year = _map($(info).find('+ dd').find('a'), (a) =>{
+                return a.children[0].data }).join('/');
         } else if (i.startsWith('导演：')) {
-            vod.vod_director = _.map($(info).find('a'), (a) => {
-                return a.children[0].data;
+            vod.vod_director = _map($(info).find('+ dd').find('a'), (a) =>{
+                return a.children[0].data }).join('/');
             }).join('/');
         } else if (i.startsWith('主演：')) {
-            vod.vod_actor = _.map($(info).find('a'), (a) => {
-                return a.children[0].data;
-            }).join('/');
+            vod.vod_actor = _map($(info).find('+ dd').find('a'), (a) =>{
+                return a.children[0].data }).join('/');
         } else if (i.startsWith('语言：')) {
-            vod.vod_lang = i.substring(3);
+            vod.vod_lang = _map($(info).find('+ dd').find('a'), (a) =>{
+                return a.children[0].data }).join('/');
         }
     }
     let playUrls = $($('ul.list-unstyled.row.text-center.ff-playurl-line.ff-playurl')[0]).find('li > a');

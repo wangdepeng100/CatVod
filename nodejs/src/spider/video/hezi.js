@@ -174,7 +174,6 @@ async function detail(inReq, _outResp) {
         } else if (i.startsWith('导演：')) {
             vod.vod_director = _map($(info).find('+ dd').find('a'), (a) =>{
                 return a.children[0].data }).join('/');
-            }).join('/');
         } else if (i.startsWith('主演：')) {
             vod.vod_actor = _map($(info).find('+ dd').find('a'), (a) =>{
                 return a.children[0].data }).join('/');

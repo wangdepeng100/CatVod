@@ -225,63 +225,38 @@ async function search(inReq, _outResp) {
     });
 }
 
-async function sniff(inReq, _outResp) {
-    if (inReq.body.action == 'request') {
-        if (inReq.body.url.indexOf('.html') > 0 || inReq.body.url.indexOf('url=') > 0) {
-            const resp = await req.get(inReq.body.url, {
-                headers: inReq.body.headers,
-            });
-            const respHeaders = resp.headers.toJSON();
-            delete respHeaders['transfer-encoding'];
-            delete respHeaders['cache-control'];
-            delete respHeaders['content-length'];
-            if (respHeaders['content-encoding'] == 'gzip') {
-                delete respHeaders['content-encoding'];
-            }
-            _outResp.headers(respHeaders);
-            return resp.data.replaceAll(`var p = navigator.platform;`, `var p ='';`)
-                .replaceAll(
-                `</html>`,
-                `<script>
-            const loop1 = setInterval(function () {
-              if (
-                document.querySelectorAll('[onclick*=playlist]').length > 0 &&
-                window.playlist
-              ) {
-                clearInterval(loop1);
-                document.querySelectorAll('[onclick*=playlist]')[0].click();
-                return;
-              }
-            }, 200);</script></html>`)
-                .replaceAll(`autoplay: false`, `autoplay: true`)
-                .replaceAll(`<video`, `<video autoplay=true `);
-        } else if (inReq.body.url.indexOf('video_mp4') > 0 || inReq.body.url.indexOf('index.m3u8') >= 0) {
-            _outResp.header('sniff_end', '1');
-            return 'block';
-        }
-    }
-    return '';
-}
 
 //await play({body: {id: '/vod-play-id-178008-sid-2-pid-1.html'}})
 async function play(inReq, _outResp) {
     let id = inReq.body.id;
-    const sniffer = await inReq.server.messageToDart({
-        action: 'sniff',
-        opt: {
-            ua:  UA,
-            url: id,
-            timeout: 5000,
-            // rule: 'xxxxxxx'
-            intercept: inReq.server.address().url + inReq.server.prefix + '/sniff',
-        },
-    });
-    if (sniffer && sniffer.url) {
-        return {
-            parse: 0,
-            url: sniffer.url,
-        };
-    }
+    let link = host + id;
+	const sniffer = await inReq.server.messageToDart({
+            action: 'sniff',
+            opt: {
+                url: link,
+                timeout: 10000,
+                rule: 'http((?!http).){12,}?\\.(m3u8|mp4|mkv|flv|mp3|m4a|aac)\\?.*|http((?!http).){12,}\\.(m3u8|mp4|mkv|flv|mp3|m4a|aac)|http((?!http).)*?video/tos*|http((?!http).)*?obj/tos*',
+            },
+        });
+        if (sniffer.url.indexOf('url=http')!==-1) {
+            sniffer.url=sniffer.url.match(/url=(.*?)&/)[1];
+            }
+        if (sniffer && sniffer.url) {
+            const hds = {};
+            if (sniffer.headers) {
+                if (sniffer.headers['user-agent']) {
+                    hds['User-Agent'] = sniffer.headers['user-agent'];
+                }
+                if (sniffer.headers['referer']) {
+                    hds['Referer'] = sniffer.headers['referer'];
+                }
+            }
+            return {
+                parse: 0,
+                url: sniffer.url,
+                header: hds,
+            };
+        }
 }
 
 
@@ -372,7 +347,6 @@ export default {
         fastify.post('/init', init);
         fastify.post('/home', home);
         fastify.post('/category', category);
-        fastify.post('/sniff', sniff);
         fastify.post('/detail', detail);
         fastify.post('/play', play);
         fastify.post('/search', search);

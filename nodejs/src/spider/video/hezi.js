@@ -39,10 +39,7 @@ async function home(inReq, outResp) {
         },{
             type_id: '4',
             type_name: '综艺',
-        },{
-            type_id: '7',
-            type_name: '音乐',
-        },
+        }
     ];
     filterObj = await genFilterObj(classes);
     
@@ -108,7 +105,7 @@ async function genFilterObj(classes) {
                 {'n': '点赞最多', 'v': 'up'}
             ]
         };
-        order['init'] = order.value[0];
+        order['init'] = order.value[0].v;
         
         filterObj[typeId] = [tag,area,year,order];
     }

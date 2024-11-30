@@ -103,6 +103,30 @@ appys: {
         }],
     },
 m3u8cj: {
+    ykm3u8: [{
+      name: "易看源",
+      url: "https://api.yikanapi.com/api.php/provide/vod/from/yikan",
+      categories: ["韩国伦理", "日本伦理", "香港伦理", "西方伦理", "台湾伦理", "日本写真", "西方写真", "国产写真", "动漫"],
+      search: true
+    }],
+    clm3u8: [{
+      name: "草榴源",
+      url: "https://www.caoliuzyw.com/api.php/provide/vod/from/clm3u8",
+      categories: ["国产传媒", "国产自拍", "女优合集", "中文字幕", "亚洲无码", "亚洲有码", "国产探花", "人妻熟女", "强奸乱伦", "网曝门事件", "绿帽淫妻", "欧美情色", "动漫卡通", "美女主播", "三级伦理", "人妻熟女", "AV解说", "国产乱伦"],
+      search: true
+    }],
+    timim3u8: [{
+      name: "甜蜜源",
+      url: "https://timizy10.cc/api.php/provide/vod/from/timim3u8",
+      categories: ["日本有码", "日本无码", "中文字幕", "国产传媒", "制服诱惑", "国产视频", "国产自拍", "国产主播", "萝莉少女", "滴滴探花", "网曝黑料", "同性恋区", "欧美精品", "女优明星", "SM调教", "VP视角", "人妖系列", "AV解说", "激情动漫", "明星换脸", "精品三级", "热门头条", "口交足交", "自拍偷拍", "迷奸", "精选视频", "抖阴视频"],
+      search: true
+    }],
+    kkm3u8: [{
+      name: "写真源",
+      url: "https://kkzy.me/api.php/provide/vod/",
+      categories: ["写真资源", "韩国伦理", "西方伦理", "日本伦理", "动漫", "短视频主播", "两性课堂"],
+      search: true
+    }],
     askm3u8: [{
       name: "奥卡源",
       url: "https://aosikazy.com/api.php/provide/vod/",
@@ -111,6 +135,33 @@ m3u8cj: {
     sngm3u8: [{
       name: "南国源",
       url: "https://api.sexnguon.com/api.php/provide/vod/",
+      search: true
+    }],
+    ptm3u8: [{
+      name: "葡萄源",
+      url: "https://caiji.putaozyw.net/inc/apijson_vod.php",
+      search: true
+    }],
+    xbm3u8: [{
+      name: "雪豹源",
+      url: "https://api.xbapi.cc/api.php/provide/vod/",
+      search: true
+    }],
+    ddm3u8: [{
+      name: "滴滴源",
+      url: "https://api.ddapi.cc/api.php/provide/vod/",
+      search: true
+    }],
+    swm3u8: [{
+      name: "丝袜源",
+      url: "https://www.siwazyw.tv/api.php/provide/vod/",
+      categories: ["亚洲无码", "亚洲有码", "欧美情色", "中文字幕", "动漫卡通", "美女主播", "人妻熟女", "强奸乱伦", "美女主播", "日韩伦理", "国产自拍", "精选口爆", "同性同志", "重口味", "91大神", "AV解说"],
+      search: true
+    }],
+    adm3u8: [{
+      name: "爱豆源",
+      url: "http://chujia.cc/api.php/provide/vod/from/m3u8",
+      categories: ["麻豆视频", "中文字幕", "日本无码", "童颜巨乳", "校园萝莉", "女优明星", "角色扮演", "制服诱惑", "强奸乱伦", "AI换脸", "黑料泄密", "主播直播", "国产精品", "探花视频", "SM调教", "人妻熟女"],
       search: true
     }]
     },

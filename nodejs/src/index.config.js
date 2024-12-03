@@ -5,7 +5,7 @@ export default {
         },
     },
 	ali: {
-    token: '1f7b2ef59e6c42ab8485b1f3bdd27d81',
+    token: '67b8b6ec3b7c4c81a81e85589a71ef6d',
     token280: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI0NmJiMDA5OTVkZTg0OGU3YmM2ZTVkZWQxNzM3ZmY1ZCIsImF1ZCI6IjczZTYxMTgzMWE3YzRkODdhYzQ5Yzg0ODFiZjlmMmM0IiwiZXhwIjoxNzM3ODAwNjAxLCJpYXQiOjE3MzAwMjQ2MDEsImp0aSI6IjMyOWY4YzFkODI0NTRmOTk5OGJjZjJiNTIzMWY2OGE1In0.nAQH6ZhEWAi2n7yNnZ7I4e2bG6ZQzBxdBAM3SrwSBTyBtiNXryafaThQwF7IYkNnSS9hvAuc3HTxgADGFG1FEQ',
     },
     quark: {

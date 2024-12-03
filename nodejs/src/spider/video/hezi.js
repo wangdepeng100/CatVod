@@ -233,7 +233,7 @@ async function play(inReq, _outResp) {
             opt: {
                 url: link,
                 timeout: 10000,
-                rule: 'http((?!http).){12,}?\\.(m3u8|mp4|mkv|flv|mp3|m4a|aac)\\?.*|http((?!http).){12,}\\.(m3u8|mp4|mkv|flv|mp3|m4a|aac)|http((?!http).)*?video/tos*|http((?!http).)*?obj/tos*',
+                rule: 'http((?!http).){12,}?(m3u8|mp4|mkv|flv|mp3|m4a|aac)'
             },
         });
         if (sniffer.url.indexOf('url=http')!==-1) {

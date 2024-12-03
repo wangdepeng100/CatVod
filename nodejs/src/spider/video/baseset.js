@@ -326,10 +326,6 @@ async function proxy(inReq, outResp) {
     outResp.code(200).headers('Content-Type', resp.headers['Content-Type']).send(resp.data);*/
 }
 
-async function support(inReq, _outResp) {
-    // const clip = inReq.body.clip;
-    return 'true';
-}
 
 async function test(inReq, outResp) {
     try {
@@ -381,10 +377,9 @@ export default {
     meta: {
         key: 'baseset',
         name: '⚙️ 配置',
-        type: 4,
+        type: 3,
     },
     api: async (fastify) => {
-        fastify.post('/support', support);
         fastify.post('/init', Eqe);
         fastify.post('/home', vqe);
         fastify.post('/category', yqe);

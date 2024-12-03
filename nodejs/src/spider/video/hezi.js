@@ -262,10 +262,7 @@ function getFileterObj(){
                             "v": "up"
                         }
                     ],
-                    "init": {
-                        "n": "最近热播",
-                        "v": "hits"
-                    }
+                    "init": "hits"
                 }
             ],
             "2": [
@@ -459,10 +456,7 @@ function getFileterObj(){
                             "v": "up"
                         }
                     ],
-                    "init": {
-                        "n": "最近热播",
-                        "v": "hits"
-                    }
+                    "init": "hits"
                 }
             ],
             "3": [
@@ -640,10 +634,7 @@ function getFileterObj(){
                             "v": "up"
                         }
                     ],
-                    "init": {
-                        "n": "最近热播",
-                        "v": "hits"
-                    }
+                    "init": "hits"
                 }
             ],
             "4": [
@@ -825,10 +816,7 @@ function getFileterObj(){
                             "v": "up"
                         }
                     ],
-                    "init": {
-                        "n": "最近热播",
-                        "v": "hits"
-                    }
+                    "init": "hits"
                 }
             ]
     }

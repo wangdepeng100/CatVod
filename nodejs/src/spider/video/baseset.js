@@ -376,7 +376,7 @@ export default {
     meta: {
         key: 'baseset',
         name: '⚙️ 配置',
-        type: 4,
+        type: 3,
     },
     api: async (fastify) => {
         fastify.post('/init', Eqe);

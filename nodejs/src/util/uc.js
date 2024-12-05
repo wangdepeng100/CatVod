@@ -33,7 +33,7 @@ const shareTokenCache = {};
 const saveDirName = 'CatVodOpen';
 let saveDirId = null;
 
-export async function initUC(db, cfg) {
+export async function initUc(db, cfg) {
     if (cookie) return;
     localDb = db;
     cookie = cfg.cookie;

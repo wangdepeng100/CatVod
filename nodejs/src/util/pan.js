@@ -301,8 +301,8 @@ export async function play(inReq, _outResp) {
         const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/quark';
         urls.push('代理');
         urls.push(`${proxyUrl}/src/down/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
-        /*urls.push('原画');
-        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);*/
+        urls.push('原画');
+        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
         const result = {
             parse: 0,
             url: urls,
@@ -333,8 +333,8 @@ export async function play(inReq, _outResp) {
         const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/uc';
         urls.push('代理');
         urls.push(`${proxyUrl}/src/down/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
-        /*urls.push('原画');
-        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);*/
+        urls.push('原画');
+        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
         const result = {
             parse: 0,
             url: urls,

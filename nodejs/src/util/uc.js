@@ -20,13 +20,13 @@ const pr = 'pr=ucpro&fr=pc';
 
 export const baseHeader = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) quark-cloud-drive/2.5.20 Chrome/100.0.4896.160 Electron/18.3.5.4-b478491100 Safari/537.36 Channel/pckk_other_ch',
-    Referer: 'https://pan.quark.cn',
+    Referer: 'https://drive.uc.cn',
 };
 
 let localDb = null;
 let ckey = null;
 
-const apiUrl = 'https://drive.quark.cn/1/clouddrive/';
+const apiUrl = 'https://pc-api.uc.cn/1/clouddrive/';
 export let cookie = '';
 
 const shareTokenCache = {};
@@ -38,7 +38,7 @@ export async function initQuark(db, cfg) {
     localDb = db;
     cookie = cfg.cookie;
     ckey = CryptoJS.enc.Hex.stringify(CryptoJS.MD5(cfg.cookie)).toString();
-    const localCfg = await db.getObjectDefault(`/quark`, {});
+    const localCfg = await db.getObjectDefault(`/uc`, {});
     if (localCfg[ckey]) {
         cookie = localCfg[ckey];
     }

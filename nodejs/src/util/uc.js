@@ -347,7 +347,7 @@ export async function getDownload(shareId, stoken, fileId, fileToken, clean) {
         if (!saveFileId) return null;
         saveFileIdCaches[fileId] = saveFileId;
     }
-    const down = await api(`file/download?${pr}`, {
+    const down = await api(`file/download?${pr}&uc_param_str=`, {
         fids: [saveFileIdCaches[fileId]],
     });
     if (down.data) {

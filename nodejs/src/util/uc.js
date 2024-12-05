@@ -16,10 +16,10 @@ export function getShareData(url) {
     return null;
 }
 
-const pr = 'pr=ucpro&fr=pc';
+const pr = 'pr=UCBrowser&fr=pc';
 
 export const baseHeader = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) quark-cloud-drive/2.5.20 Chrome/100.0.4896.160 Electron/18.3.5.4-b478491100 Safari/537.36 Channel/pckk_other_ch',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) uc-cloud-drive/2.5.20 Chrome/100.0.4896.160 Electron/18.3.5.4-b478491100 Safari/537.36 Channel/pckk_other_ch',
     Referer: 'https://drive.uc.cn',
 };
 
@@ -33,7 +33,7 @@ const shareTokenCache = {};
 const saveDirName = 'CatVodOpen';
 let saveDirId = null;
 
-export async function initQuark(db, cfg) {
+export async function initUC(db, cfg) {
     if (cookie) return;
     localDb = db;
     cookie = cfg.cookie;
@@ -158,7 +158,7 @@ async function api(url, data, headers, method, retry) {
         if (puus) {
             if (cookie.match(/__puus=([^;]+)/)[1] != puus[1]) {
                 cookie = cookie.replace(/__puus=[^;]+/, `__puus=${puus[1]}`);
-                await localDb.push(`/quark/${ckey}`, cookie);
+                await localDb.push(`/uc/${ckey}`, cookie);
             }
         }
     }
@@ -388,7 +388,7 @@ async function testSupport(url, headers) {
 
 const urlHeadCache = {};
 let currentUrlKey = '';
-const cacheRoot = (process.env['NODE_PATH'] || '.') + '/quark_cache';
+const cacheRoot = (process.env['NODE_PATH'] || '.') + '/uc_cache';
 const maxCache = 1024 * 1024 * 100;
 
 function delAllCache(keepKey) {

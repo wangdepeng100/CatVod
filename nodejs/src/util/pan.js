@@ -3,7 +3,7 @@ import { MAC_UA, formatPlayUrl } from './misc.js';
 import * as HLS from 'hls-parser';
 import * as Ali from './ali.js';
 import * as Quark from './quark.js';
-import * as UC from './uc.js';
+import * as Uc from './uc.js';
 import dayjs from 'dayjs';
 
 export const ua = MAC_UA;

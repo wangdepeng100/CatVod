@@ -5,7 +5,7 @@ import fs from 'fs';
 import { PassThrough } from 'stream';
 
 export function getShareData(url) {
-    let regex = /https:\/\/drive\.uc\.cn\/s\/([^\\|#/]+)/;
+    let regex = /https:\/\/drive\.uc\.cn\/s\/([^\\|#/?]+)/;
     let matches = regex.exec(url);
     if (matches) {
         return {

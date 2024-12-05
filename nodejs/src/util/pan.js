@@ -36,7 +36,7 @@ export function isEmpty(value) {
 export async function init(inReq, _outResp) {
     await Ali.initAli(inReq.server.db, inReq.server.config.ali);
     await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
-    await UC.initUC(inReq.server.db, inReq.server.config.uc);
+    await Uc.initUc(inReq.server.db, inReq.server.config.uc);
     return{};
 }
 
@@ -80,9 +80,9 @@ export async function detail0(shareUrls ,vod) {
                     }
                 }
             } else if (shareUrl.includes('https://drive.uc.cn')) {
-                const shareData = UC.getShareData(shareUrl);
+                const shareData = Uc.getShareData(shareUrl);
                 if (shareData) {
-                    const videos = await UC.getFilesByShareUrl(shareData);
+                    const videos = await Uc.getFilesByShareUrl(shareData);
                     if (videos.length > 0) {
                         froms.push('UC网盘-'  + shareData.shareId);
                         urls.push(
@@ -115,7 +115,7 @@ const ucDownloadingCache = {};
 export async function proxy(inReq, _outResp) {
     await Ali.initAli(inReq.server.db, inReq.server.config.ali);
     await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
-    await Quark.initUC(inReq.server.db, inReq.server.config.uc);
+    await Quark.initUc(inReq.server.db, inReq.server.config.uc);
     const site = inReq.params.site;
     const what = inReq.params.what;
     const shareId = inReq.params.shareId;
@@ -231,14 +231,14 @@ export async function proxy(inReq, _outResp) {
         const flag = inReq.params.flag;
         if (what == 'trans') {
             if (!ucTranscodingCache[ids[1]]) {
-                ucTranscodingCache[ids[1]] = (await UC.getLiveTranscoding(shareId, decodeURIComponent(ids[0]), ids[1], ids[2])).filter((t) => t.accessable);
+                ucTranscodingCache[ids[1]] = (await Uc.getLiveTranscoding(shareId, decodeURIComponent(ids[0]), ids[1], ids[2])).filter((t) => t.accessable);
             }
             downUrl = ucTranscodingCache[ids[1]].filter((t) => t.resolution.toLowerCase() == flag)[0].video_info.url;
             _outResp.redirect(downUrl);
             return;
         } else {
             if (!ucDownloadingCache[ids[1]]) {
-                const down = await UC.getDownload(shareId, decodeURIComponent(ids[0]), ids[1], ids[2], flag == 'down');
+                const down = await Uc.getDownload(shareId, decodeURIComponent(ids[0]), ids[1], ids[2], flag == 'down');
                 if (down) ucDownloadingCache[ids[1]] = down;
             }
             downUrl = ucDownloadingCache[ids[1]].download_url;
@@ -247,16 +247,16 @@ export async function proxy(inReq, _outResp) {
                 return;
             }
         }
-        return await UC.chunkStream(
+        return await Uc.chunkStream(
             inReq,
             _outResp,
             downUrl,
             ids[1],
             Object.assign(
                 {
-                    Cookie: UC.cookie,
+                    Cookie: Uc.cookie,
                 },
-                UC.baseHeader,
+                Uc.baseHeader,
             ),
         );
     }
@@ -340,9 +340,9 @@ export async function play(inReq, _outResp) {
             url: urls,
             header: Object.assign(
                 {
-                    Cookie: UC.cookie,
+                    Cookie: Uc.cookie,
                 },
-                UC.baseHeader,
+                Uc.baseHeader,
             ),
         };
         if (ids[3]) {

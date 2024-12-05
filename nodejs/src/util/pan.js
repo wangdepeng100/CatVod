@@ -115,7 +115,7 @@ const ucDownloadingCache = {};
 export async function proxy(inReq, _outResp) {
     await Ali.initAli(inReq.server.db, inReq.server.config.ali);
     await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
-    await Quark.initUc(inReq.server.db, inReq.server.config.uc);
+    await Uc.initUc(inReq.server.db, inReq.server.config.uc);
     const site = inReq.params.site;
     const what = inReq.params.what;
     const shareId = inReq.params.shareId;

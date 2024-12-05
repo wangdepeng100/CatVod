@@ -3,10 +3,12 @@ import { MAC_UA, formatPlayUrl } from './misc.js';
 import * as HLS from 'hls-parser';
 import * as Ali from './ali.js';
 import * as Quark from './quark.js';
+import * as UC from './uc.js';
 import dayjs from 'dayjs';
 
 export const ua = MAC_UA;
 export const Qpic = 'https://img.omii.top/i/2024/03/17/vqmr8m.webp';
+export const Upic = 'https://img.omii.top/i/2024/03/17/vqmr8m.webp';
 export const Apic = 'https://img.omii.top/i/2024/03/17/vqn6em.webp';
 
 function conversion(bytes){
@@ -34,6 +36,7 @@ export function isEmpty(value) {
 export async function init(inReq, _outResp) {
     await Ali.initAli(inReq.server.db, inReq.server.config.ali);
     await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
+    await UC.initUC(inReq.server.db, inReq.server.config.uc);
     return{};
 }
 
@@ -42,27 +45,46 @@ export async function detail0(shareUrls ,vod) {
         const froms = [];
         const urls = [];
         for (const shareUrl of shareUrls) {
-            const shareData = Ali.getShareData(shareUrl);
-            if (shareData) {
-                const videos = await Ali.getFilesByShareUrl(shareData);
-                if (videos.length > 0) {
-                    froms.push('阿里云盘-' + shareData.shareId);
-                    urls.push(
-                        videos
-                            .map((v) => {
-                                const ids = [v.share_id, v.file_id, v.subtitle ? v.subtitle.file_id : ''];
-                                const size = conversion(v.size);
-                                return formatPlayUrl('', ` ${v.name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
-                            })
-                            .join('#'),
-                    );
-                }
-            } else {
+            if (shareUrl.includes('https://www.alipan.com')) {
+                const shareData = Ali.getShareData(shareUrl);
+                if (shareData) {
+                    const videos = await Ali.getFilesByShareUrl(shareData);
+                    if (videos.length > 0) {
+                        froms.push('阿里云盘-' + shareData.shareId);
+                        urls.push(
+                            videos
+                                .map((v) => {
+                                    const ids = [v.share_id, v.file_id, v.subtitle ? v.subtitle.file_id : ''];
+                                    const size = conversion(v.size);
+                                    return formatPlayUrl('', ` ${v.name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
+                                })
+                                .join('#'),
+                        );
+                    }
+                }                
+            } else if (shareUrl.includes('https://pan.quark.cn')) {
                 const shareData = Quark.getShareData(shareUrl);
                 if (shareData) {
                     const videos = await Quark.getFilesByShareUrl(shareData);
                     if (videos.length > 0) {
                         froms.push('夸克网盘-'  + shareData.shareId);
+                        urls.push(
+                            videos
+                                .map((v) => {
+                                    const ids = [shareData.shareId, v.stoken, v.fid, v.share_fid_token, v.subtitle ? v.subtitle.fid : '', v.subtitle ? v.subtitle.share_fid_token : ''];
+                                    const size = conversion(v.size);
+                                    return formatPlayUrl('', ` ${v.file_name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
+                                })
+                                .join('#'),
+                        );
+                    }
+                }
+            } else if (shareUrl.includes('https://drive.uc.cn')) {
+                const shareData = UC.getShareData(shareUrl);
+                if (shareData) {
+                    const videos = await UC.getFilesByShareUrl(shareData);
+                    if (videos.length > 0) {
+                        froms.push('UC网盘-'  + shareData.shareId);
                         urls.push(
                             videos
                                 .map((v) => {
@@ -87,9 +109,13 @@ const aliDownloadingCache = {};
 const quarkTranscodingCache = {};
 const quarkDownloadingCache = {};
 
+const ucTranscodingCache = {};
+const ucDownloadingCache = {};
+
 export async function proxy(inReq, _outResp) {
     await Ali.initAli(inReq.server.db, inReq.server.config.ali);
     await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
+    await Quark.initUC(inReq.server.db, inReq.server.config.uc);
     const site = inReq.params.site;
     const what = inReq.params.what;
     const shareId = inReq.params.shareId;
@@ -199,6 +225,40 @@ export async function proxy(inReq, _outResp) {
                 Quark.baseHeader,
             ),
         );
+    } else if (site == 'uc') {
+        let downUrl = '';
+        const ids = fileId.split('*');
+        const flag = inReq.params.flag;
+        if (what == 'trans') {
+            if (!ucTranscodingCache[ids[1]]) {
+                ucTranscodingCache[ids[1]] = (await UC.getLiveTranscoding(shareId, decodeURIComponent(ids[0]), ids[1], ids[2])).filter((t) => t.accessable);
+            }
+            downUrl = ucTranscodingCache[ids[1]].filter((t) => t.resolution.toLowerCase() == flag)[0].video_info.url;
+            _outResp.redirect(downUrl);
+            return;
+        } else {
+            if (!ucDownloadingCache[ids[1]]) {
+                const down = await UC.getDownload(shareId, decodeURIComponent(ids[0]), ids[1], ids[2], flag == 'down');
+                if (down) ucDownloadingCache[ids[1]] = down;
+            }
+            downUrl = ucDownloadingCache[ids[1]].download_url;
+            if (flag == 'redirect') {
+                _outResp.redirect(downUrl);
+                return;
+            }
+        }
+        return await UC.chunkStream(
+            inReq,
+            _outResp,
+            downUrl,
+            ids[1],
+            Object.assign(
+                {
+                    Cookie: UC.cookie,
+                },
+                UC.baseHeader,
+            ),
+        );
     }
 }
 
@@ -251,6 +311,38 @@ export async function play(inReq, _outResp) {
                     Cookie: Quark.cookie,
                 },
                 Quark.baseHeader,
+            ),
+        };
+        if (ids[3]) {
+            result.extra = {
+                subt: `${proxyUrl}/src/subt/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[4]}*${ids[5]}/.bin`,
+            };
+        }
+        transcoding.forEach((t) => {
+            idx = arr.indexOf(t.resolution);
+            urls.push(p[idx]);
+            urls.push(`${proxyUrl}/trans/${t.resolution.toLowerCase()}/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.mp4`);
+        });
+        return result;
+    } else if (flag.startsWith('UC网盘')) {
+        const transcoding = (await UC.getLiveTranscoding(ids[0], ids[1], ids[2], ids[3])).filter((t) => t.accessable);
+        ucTranscodingCache[ids[2]] = transcoding;
+        const urls = [];
+        const p= ['超清','蓝光','高清','标清','普画','极速'];
+        const arr =['4k','2k','super','high','low','normal'];
+        const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/uc';
+        urls.push('代理');
+        urls.push(`${proxyUrl}/src/down/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
+        /*urls.push('原画');
+        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);*/
+        const result = {
+            parse: 0,
+            url: urls,
+            header: Object.assign(
+                {
+                    Cookie: UC.cookie,
+                },
+                UC.baseHeader,
             ),
         };
         if (ids[3]) {

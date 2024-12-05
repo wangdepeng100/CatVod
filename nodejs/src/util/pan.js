@@ -36,7 +36,7 @@ export function isEmpty(value) {
 export async function init(inReq, _outResp) {
     await Ali.initAli(inReq.server.db, inReq.server.config.ali);
     await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
-    await UC.initUc(inReq.server.db, inReq.server.config.uc);
+    await UC.initUC(inReq.server.db, inReq.server.config.uc);
     return{};
 }
 
@@ -115,7 +115,7 @@ const ucDownloadingCache = {};
 export async function proxy(inReq, _outResp) {
     await Ali.initAli(inReq.server.db, inReq.server.config.ali);
     await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
-    await Uc.initUc(inReq.server.db, inReq.server.config.uc);
+    await UC.initUC(inReq.server.db, inReq.server.config.uc);
     const site = inReq.params.site;
     const what = inReq.params.what;
     const shareId = inReq.params.shareId;

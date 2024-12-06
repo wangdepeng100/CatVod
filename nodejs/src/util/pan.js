@@ -20,7 +20,7 @@ export async function init(inReq, _outResp) {
     return{};
 }
 
-export async function detail0(shareUrls ,vod) {
+export async function detail(shareUrls ,vod) {
         shareUrls = !Array.isArray(shareUrls) ? [shareUrls] : shareUrls;
         const froms = [];
         const urls = [];

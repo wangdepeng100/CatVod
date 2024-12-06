@@ -492,9 +492,10 @@ export async function detail(shareUrl) {
                             const size = conversion(v.size);
                             return formatPlayUrl('', ` ${v.name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
                         })
-                        .join('#');
+                        .join('#')
             }
         }
+        return result;
     }                
 }
 

@@ -1,37 +1,16 @@
 import req from './req.js';
-import { MAC_UA, formatPlayUrl } from './misc.js';
+import { IOS_UA, formatPlayUrl, conversion, isEmpty} from './misc.js';
 import * as HLS from 'hls-parser';
 import * as Ali from './ali.js';
 import * as Quark from './quark.js';
 import * as UC from './uc.js';
 import dayjs from 'dayjs';
 
-export const ua = MAC_UA;
+export const ua = IOS_UA;
 export const Qpic = 'https://img.omii.top/i/2024/03/17/vqmr8m.webp';
 export const Upic = 'https://img.omii.top/i/2024/03/17/vqmr8m.webp';
 export const Apic = 'https://img.omii.top/i/2024/03/17/vqn6em.webp';
 
-function conversion(bytes){
-  let mb = bytes / (1024 * 1024);
-  if(mb > 1024){
-    return `${(mb/1024).toFixed(2)}GB`;
-    }else{
-        return `${parseInt(mb).toFixed(0)}MB`;
-    }
-}
-
-
-export function isEmpty(value) {
-  if (value === null || value === undefined) {
-    return true;
-  } else if (typeof value === 'string') {
-    return value.length === 0;
-  } else if (Array.isArray(value)) {
-    return value.length === 0;
-  } else {
-    return false;
-  }
-}
 
 export async function init(inReq, _outResp) {
     await Ali.initAli(inReq.server.db, inReq.server.config.ali);
@@ -151,7 +130,7 @@ export async function proxy(inReq, _outResp) {
             if (!transcoding.plist) {
                 const resp = await req.get(transcoding.url, {
                     headers: {
-                        'User-Agent': MAC_UA,
+                        'User-Agent': IOS_UA,
                     },
                 });
                 transcoding.plist = HLS.parse(resp.data);

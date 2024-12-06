@@ -227,7 +227,7 @@ async function detail(inReq, _outResp) {
                 if (shareData) {
                     const videos = await Quark.getFilesByShareUrl(shareData);
                     if (videos.length > 0) {
-                        froms.push('夸克网盘-' + shareData.shareId);
+                        froms.push('夸克网盘-'  + shareData.shareId);
                         urls.push(
                             videos
                                 .map((v) => {
@@ -380,7 +380,7 @@ async function play(inReq, _outResp) {
     const id = inReq.body.id;
     const ids = id.split('*');
     let idx = 0;
-    if (flag.startsWith('阿里云盘-')) {
+    if (flag.startsWith('阿里云盘')) {
         const transcoding = await Ali.getLiveTranscoding(ids[0], ids[1]);
         aliTranscodingCache[ids[1]] = transcoding;
         transcoding.sort((a, b) => b.template_width - a.template_width);
@@ -405,14 +405,13 @@ async function play(inReq, _outResp) {
             urls.push(`${proxyUrl}/trans/${t.template_id.toLowerCase()}/${ids[0]}/${ids[1]}/.m3u8`);
         });
         return result;
-    } else if (flag.startsWith('夸克网盘-')) {
+    } else if (flag.startsWith('夸克网盘')) {
         const transcoding = (await Quark.getLiveTranscoding(ids[0], ids[1], ids[2], ids[3])).filter((t) => t.accessable);
         quarkTranscodingCache[ids[2]] = transcoding;
-        const urls = [];
         const p= ['4K','超清','高清','标清','普画','极速'];
         const arr =['4k','2k','super','high','low','normal'];
+        const urls = [];
         const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/quark';
-		
 		urls.push('代理');
         urls.push(`${proxyUrl}/src/down/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
         urls.push('原画');
@@ -432,7 +431,7 @@ async function play(inReq, _outResp) {
                 subt: `${proxyUrl}/src/subt/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[4]}*${ids[5]}/.bin`,
             };
         }
-        transcoding.forEach((t) => {
+            transcoding.forEach((t) => {
             idx = findElementIndex(arr,t.resolution);
             urls.push(p[idx]);
             urls.push(`${proxyUrl}/trans/${t.resolution.toLowerCase()}/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.mp4`);
@@ -440,7 +439,6 @@ async function play(inReq, _outResp) {
         return result;
     }
 }
-
 
 async function search(inReq, _outResp) {
     const pg = inReq.body.page;

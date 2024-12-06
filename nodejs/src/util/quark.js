@@ -607,7 +607,7 @@ export async function detail(shareUrl) {
                             const size = conversion(v.size);
                             return formatPlayUrl('', ` ${v.file_name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
                         })
-                        .join('#'),
+                        .join('#')
                 );
             }
         }

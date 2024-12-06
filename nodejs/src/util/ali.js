@@ -564,9 +564,10 @@ export async function proxy(inReq, outResp) {
                 return hls;
             }
         }
+    }
 }
 
-export async function play_(inReq, outResp) {
+export async function play(inReq, outResp) {
     const flag = inReq.body.flag;
     const id = inReq.body.id;
     const ids = id.split('*');

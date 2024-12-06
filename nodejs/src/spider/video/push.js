@@ -1,6 +1,6 @@
 import req from '../../util/req.js';
 import { load } from 'cheerio';
-import { ua, init ,detail0 ,proxy ,play } from '../../util/pan.js';
+import { ua, init ,detail as _detail ,proxy ,play as _play } from '../../util/pan.js';
 import CryptoJS from 'crypto-js';
 import dayjs from 'dayjs';
 
@@ -68,7 +68,7 @@ async function detail(inReq, _outResp) {
             videos.push(vod);
         }
         else{
-            videos.push(await detail0(shareUrls ,vod));
+            videos.push(await _detail(shareUrls ,vod));
         }
     }
     return {
@@ -76,8 +76,8 @@ async function detail(inReq, _outResp) {
     };
 }
 
-async function play0(inReq, _outResp){
-    const result = await play(inReq, _outResp);
+async function play(inReq, _outResp){
+    const result = await _play(inReq, _outResp);
     if(!result){
         const id = inReq.body.id;
         if (id.startsWith('https://m.nmddd.com/vod-play')) {
@@ -153,7 +153,7 @@ export default {
         fastify.post('/support', support);
         fastify.post('/sniff', sniff);
         fastify.post('/detail', detail);
-        fastify.post('/play', play0);
+        fastify.post('/play', play);
         fastify.get('/proxy/:site/:what/:flag/:shareId/:fileId/:end', proxy);
         fastify.get('/test', test);
     },

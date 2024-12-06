@@ -1,6 +1,6 @@
 import req from '../../util/req.js';
 import { load } from 'cheerio';
-import { ua, init ,detail0 ,proxy ,play ,test } from '../../util/pan.js';
+import { ua, init ,detail as _detail ,proxy ,play ,test } from '../../util/pan.js';
 import dayjs from 'dayjs';
 
 let url = 'https://v.omtv.top';
@@ -122,7 +122,12 @@ async function detail(inReq, _outResp) {
         const shareUrls = $('div.module-row-info p')
             .map((_, p) => p.children[0].data)
             .get();
-        videos.push(await detail0(shareUrls ,vod));
+        const vodFromUrl = await _detail(shareUrls);
+        if (vodFromUrl){
+            vod.vod_play_from = vodFromUrl.froms;
+            vod.vod_play_url = vodFromUrl.urls;
+        }
+        videos.push(vod);
     }
     return {
         list: videos,

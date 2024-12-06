@@ -1,6 +1,6 @@
 import req from '../../util/req.js';
 import { formatPlayUrl } from '../../util/misc.js';
-import { ua, init as _init ,detail as _detail ,proxy ,play as _play } from '../../util/pan.js';
+import { ua, init as _init ,detail as _detail ,proxy ,play } from '../../util/pan.js';
 import { load } from 'cheerio';
 import * as HLS from 'hls-parser';
 import * as Ali from '../../util/ali.js';
@@ -195,42 +195,7 @@ async function detail(inReq, _outResp) {
             .get();
         const froms = [];
         const urls = [];
-        for (const shareUrl of shareUrls) {
-            const shareData = Ali.getShareData(shareUrl);
-            if (shareData) {
-                const videos = await Ali.getFilesByShareUrl(shareData);
-                if (videos.length > 0) {
-                    froms.push('阿里云盘-' + shareData.shareId);
-                    urls.push(
-                        videos
-                            .map((v) => {
-                                const ids = [v.share_id, v.file_id, v.subtitle ? v.subtitle.file_id : ''];
-                                const size = conversion(v.size);
-                                return formatPlayUrl('', ` ${v.name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
-								 
-                            })
-                            .join('#'),
-                    );
-                }
-            } else {
-                const shareData = Quark.getShareData(shareUrl);
-                if (shareData) {
-                    const videos = await Quark.getFilesByShareUrl(shareData);
-                    if (videos.length > 0) {
-                        froms.push('夸克网盘-'  + shareData.shareId);
-                        urls.push(
-                            videos
-                                .map((v) => {
-                                    const ids = [shareData.shareId, v.stoken, v.fid, v.share_fid_token, v.subtitle ? v.subtitle.fid : '', v.subtitle ? v.subtitle.share_fid_token : ''];
-                                    const size = conversion(v.size);
-                                    return formatPlayUrl('', ` ${v.file_name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
-                                })
-                                .join('#'),
-                        );
-                    }
-                }
-            }
-        }
+        await _detail(shareUrls,vod);
         vod.vod_play_from = froms.join('$$$');
         vod.vod_play_url = urls.join('$$$');
         videos.push(vod);
@@ -244,71 +209,6 @@ async function detail(inReq, _outResp) {
 
 function findElementIndex(arr, elem) {
   return arr.indexOf(elem);
-}
-
-async function play(inReq, _outResp) {
-    const flag = inReq.body.flag;
-    const id = inReq.body.id;
-    const ids = id.split('*');
-    let idx = 0;
-    if (flag.startsWith('阿里云盘')) {
-        const transcoding = await Ali.getLiveTranscoding(ids[0], ids[1]);
-        aliTranscodingCache[ids[1]] = transcoding;
-        transcoding.sort((a, b) => b.template_width - a.template_width);
-        const p= ['超清','高清','标清','普画','极速'];
-        const arr =['QHD','FHD','HD','SD','LD'];
-        const urls = [];
-        const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/ali';
-        urls.push('原画');
-        urls.push(`${proxyUrl}/src/down/${ids[0]}/${ids[1]}/.bin`);
-        const result = {
-            parse: 0,
-            url: urls,
-        };
-        if (ids[2]) {
-            result.extra = {
-                subt: `${proxyUrl}/src/subt/${ids[0]}/${ids[2]}/.bin`,
-            };
-        }
-        transcoding.forEach((t) => {
-            idx = findElementIndex(arr,t.template_id);
-            urls.push(p[idx]);
-            urls.push(`${proxyUrl}/trans/${t.template_id.toLowerCase()}/${ids[0]}/${ids[1]}/.m3u8`);
-        });
-        return result;
-    } else if (flag.startsWith('夸克网盘')) {
-        const transcoding = (await Quark.getLiveTranscoding(ids[0], ids[1], ids[2], ids[3])).filter((t) => t.accessable);
-        quarkTranscodingCache[ids[2]] = transcoding;
-        const p= ['4K','超清','高清','标清','普画','极速'];
-        const arr =['4k','2k','super','high','low','normal'];
-        const urls = [];
-        const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/quark';
-		urls.push('代理');
-        urls.push(`${proxyUrl}/src/down/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
-        urls.push('原画');
-        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`); 
-        const result = {
-            parse: 0,
-            url: urls,
-            header: Object.assign(
-                {
-                    Cookie: Quark.cookie,
-                },
-                Quark.baseHeader,
-            ),
-        };
-        if (ids[3]) {
-            result.extra = {
-                subt: `${proxyUrl}/src/subt/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[4]}*${ids[5]}/.bin`,
-            };
-        }
-            transcoding.forEach((t) => {
-            idx = findElementIndex(arr,t.resolution);
-            urls.push(p[idx]);
-            urls.push(`${proxyUrl}/trans/${t.resolution.toLowerCase()}/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.mp4`);
-        });
-        return result;
-    }
 }
 
 async function search(inReq, _outResp) {

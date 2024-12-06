@@ -60,7 +60,12 @@ async function detail(inReq, _outResp) {
       if (Object.keys(matches) !== 0) {
         const shareUrl = matches[0];
         let vod = {};
-        videos.push(await _detail(shareUrl, vod));
+        const vodFromUrl = await _detail(shareUrl);
+        if (vodFromUrl){
+            vod.vod_play_from = vodFromUrl.froms;
+            vod.vod_play_url = vodFromUrl.urls;
+        }
+        videos.push(vod);
       }
     }
     return {

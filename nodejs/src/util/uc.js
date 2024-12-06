@@ -591,3 +591,6 @@ export async function chunkStream(inReq, outResp, url, urlKey, headers, option) 
     });
     return stream;
 }
+
+const ucTranscodingCache = {};
+const ucDownloadingCache = {};

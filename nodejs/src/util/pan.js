@@ -20,7 +20,7 @@ export async function init(inReq, _outResp) {
     return{};
 }
 
-export async function detail(shareUrls ,vod) {
+export async function detail(shareUrls) {
         shareUrls = !Array.isArray(shareUrls) ? [shareUrls] : shareUrls;
         const froms = [];
         const urls = [];
@@ -45,9 +45,11 @@ export async function detail(shareUrls ,vod) {
                 }
             }
         }
-        vod.vod_play_from = froms.join('$$$');
-        vod.vod_play_url = urls.join('$$$');
-        return vod;
+
+        return {
+            froms: froms.join('$$$'),
+            urls: urls.join('$$$')
+        };
 }
 
 export async function proxy(inReq, _outResp) {

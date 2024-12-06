@@ -1,6 +1,6 @@
 import req2 from '../../util/req2.js';
 import {load}from 'cheerio';
-import { Apic, Qpic, ua, init ,detail0 ,proxy ,play ,test ,isEmpty } from '../../util/pan.js';
+import { Apic, Qpic, ua, init ,detail as _detail ,proxy ,play ,test ,isEmpty } from '../../util/pan.js';
 import dayjs from 'dayjs';
 
 let url = 'https://www.nmme.xyz';
@@ -29,7 +29,7 @@ async function detail(inReq, _outResp) {
         let vod = ({
             vod_id: id,
         });
-        videos.push(await detail0(shareUrls, vod));
+        videos.push(await _detail(shareUrls, vod));
     }
     return {
         list: videos,

@@ -185,10 +185,10 @@ async function detail(inReq, _outResp) {
             .map((_, p) => p.children[0].data)
             .get();
 
-        const videos = await _detail(shareUrls);
-        if (data){
-            vod.vod_play_from = videos.froms;
-            vod.vod_play_url = videos.urls;
+        const vodFromUrl = await _detail(shareUrls);
+        if (vodFromUrl){
+            vod.vod_play_from = vodFromUrl.froms;
+            vod.vod_play_url = vodFromUrl.urls;
         }
         videos.push(vod);
     }

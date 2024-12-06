@@ -151,15 +151,6 @@ async function category(inReq, _outResp) {
     }
 }
 
-function conversion(bytes){
-  let mb = bytes / (1024 * 1024);
-  if(mb > 1024){
-    return `${(mb/1024).toFixed(2)}GB`;
-    }else{
-        return `${parseInt(mb).toFixed(0)}MB`;
-    }
-}
-
 async function detail(inReq, _outResp) {
     const ids = !Array.isArray(inReq.body.id) ? [inReq.body.id] : inReq.body.id;
     const videos = [];
@@ -193,11 +184,12 @@ async function detail(inReq, _outResp) {
         const shareUrls = $('div.module-row-info p')
             .map((_, p) => p.children[0].data)
             .get();
-        const froms = [];
-        const urls = [];
-        await _detail(shareUrls,vod);
-        vod.vod_play_from = froms.join('$$$');
-        vod.vod_play_url = urls.join('$$$');
+
+        const videos = await _detail(shareUrls);
+        if (data){
+            vod.vod_play_from = videos.froms;
+            vod.vod_play_url = videos.urls;
+        }
         videos.push(vod);
     }
     return {

@@ -453,8 +453,10 @@ export async function getLiveTranscoding(shareId, fileId) {
         category: 'live_transcoding',
         url_expire_sec: '14400',
     });
-    if (transcoding.video_preview_play_info && transcoding.video_preview_play_info.live_transcoding_task_list) {
-        return transcoding.video_preview_play_info.live_transcoding_task_list;
+    /*if (transcoding.video_preview_play_info && transcoding.video_preview_play_info.live_transcoding_task_list) {
+        return transcoding.video_preview_play_info.live_transcoding_task_list;*/
+    if (transcoding.video_preview_play_info && transcoding.video_preview_play_info.quick_video_list) {
+        return transcoding.video_preview_play_info.quick_video_list;
     }
     return null;
 }

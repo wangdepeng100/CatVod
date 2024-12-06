@@ -127,3 +127,25 @@ export function jsonParse(input, json) {
     }
     return {};
 }
+
+export function conversion(bytes){
+  let mb = bytes / (1024 * 1024);
+  if(mb > 1024){
+    return `${(mb/1024).toFixed(2)}GB`;
+    }else{
+        return `${parseInt(mb).toFixed(0)}MB`;
+    }
+}
+
+
+export function isEmpty(value) {
+  if (value === null || value === undefined) {
+    return true;
+  } else if (typeof value === 'string') {
+    return value.length === 0;
+  } else if (Array.isArray(value)) {
+    return value.length === 0;
+  } else {
+    return false;
+  }
+}

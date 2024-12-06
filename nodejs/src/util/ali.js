@@ -476,3 +476,6 @@ export async function getDownload(shareId, fileId) {
     }
     return null;
 }
+
+const aliTranscodingCache = {};
+const aliDownloadingCache = {};

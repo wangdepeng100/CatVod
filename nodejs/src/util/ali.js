@@ -479,3 +479,12 @@ export async function getDownload(shareId, fileId) {
 
 const aliTranscodingCache = {};
 const aliDownloadingCache = {};
+
+export async function proxy(inReq, outResp) {
+}
+
+export async function detail(inReq, outResp) {
+}
+
+export async function play(inReq, outResp) {
+}

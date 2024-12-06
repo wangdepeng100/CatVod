@@ -62,7 +62,12 @@ async function detail(inReq, _outResp) {
         let vod = ({
             vod_id: id,
         });
-        videos.push(await _detail(shareUrls, vod));
+        const vodFromUrl = await _detail(shareUrls);
+        if (vodFromUrl){
+            vod.vod_play_from = vodFromUrl.froms;
+            vod.vod_play_url = vodFromUrl.urls;
+        }
+        videos.push(vod);
     }
     return {
         list: videos,

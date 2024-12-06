@@ -25,55 +25,22 @@ export async function detail0(shareUrls ,vod) {
         const urls = [];
         for (const shareUrl of shareUrls) {
             if (shareUrl.includes('https://www.alipan.com')) {
-                const shareData = Ali.getShareData(shareUrl);
-                if (shareData) {
-                    const videos = await Ali.getFilesByShareUrl(shareData);
-                    if (videos.length > 0) {
-                        froms.push('阿里云盘-' + shareData.shareId);
-                        urls.push(
-                            videos
-                                .map((v) => {
-                                    const ids = [v.share_id, v.file_id, v.subtitle ? v.subtitle.file_id : ''];
-                                    const size = conversion(v.size);
-                                    return formatPlayUrl('', ` ${v.name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
-                                })
-                                .join('#'),
-                        );
-                    }
-                }                
+                const data = await Ali.detail(shareUrl);
+                if(data){
+                    froms.push(data.from);
+                    urls.push(data.url);
+                }
             } else if (shareUrl.includes('https://pan.quark.cn')) {
-                const shareData = Quark.getShareData(shareUrl);
-                if (shareData) {
-                    const videos = await Quark.getFilesByShareUrl(shareData);
-                    if (videos.length > 0) {
-                        froms.push('夸克网盘-'  + shareData.shareId);
-                        urls.push(
-                            videos
-                                .map((v) => {
-                                    const ids = [shareData.shareId, v.stoken, v.fid, v.share_fid_token, v.subtitle ? v.subtitle.fid : '', v.subtitle ? v.subtitle.share_fid_token : ''];
-                                    const size = conversion(v.size);
-                                    return formatPlayUrl('', ` ${v.file_name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
-                                })
-                                .join('#'),
-                        );
-                    }
+                const data = await Quark.detail(shareUrl);
+                if(data){
+                    froms.push(data.from);
+                    urls.push(data.url);
                 }
             } else if (shareUrl.includes('https://drive.uc.cn')) {
-                const shareData = UC.getShareData(shareUrl);
-                if (shareData) {
-                    const videos = await UC.getFilesByShareUrl(shareData);
-                    if (videos.length > 0) {
-                        froms.push('UC网盘-'  + shareData.shareId);
-                        urls.push(
-                            videos
-                                .map((v) => {
-                                    const ids = [shareData.shareId, v.stoken, v.fid, v.share_fid_token, v.subtitle ? v.subtitle.fid : '', v.subtitle ? v.subtitle.share_fid_token : ''];
-                                    const size = conversion(v.size);
-                                    return formatPlayUrl('', ` ${v.file_name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
-                                })
-                                .join('#'),
-                        );
-                    }
+                const data = await UC.detail(shareUrl);
+                if(data){
+                    froms.push(data.from);
+                    urls.push(data.url);
                 }
             }
         }
@@ -82,259 +49,25 @@ export async function detail0(shareUrls ,vod) {
         return vod;
 }
 
-const aliTranscodingCache = {};
-const aliDownloadingCache = {};
-
-const quarkTranscodingCache = {};
-const quarkDownloadingCache = {};
-
-const ucTranscodingCache = {};
-const ucDownloadingCache = {};
-
 export async function proxy(inReq, _outResp) {
-    await Ali.initAli(inReq.server.db, inReq.server.config.ali);
-    await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
-    await UC.initUC(inReq.server.db, inReq.server.config.uc);
     const site = inReq.params.site;
-    const what = inReq.params.what;
-    const shareId = inReq.params.shareId;
-    const fileId = inReq.params.fileId;
     if (site == 'ali') {
-        if (what == 'trans') {
-            const flag = inReq.params.flag;
-            const end = inReq.params.end;
-
-            if (aliTranscodingCache[fileId]) {
-                const purl = aliTranscodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0].url;
-                if (parseInt(purl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
-                    delete aliTranscodingCache[fileId];
-                }
-            }
-
-            if (aliTranscodingCache[fileId] && end.endsWith('.ts')) {
-                const transcoding = aliTranscodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0];
-                if (transcoding.plist) {
-                    const tsurl = transcoding.plist.segments[parseInt(end.replace('.ts', ''))].suri;
-                    if (parseInt(tsurl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
-                        delete aliTranscodingCache[fileId];
-                    }
-                }
-            }
-
-            if (!aliTranscodingCache[fileId]) {
-                const transcoding = await Ali.getLiveTranscoding(shareId, fileId).filter((t) => !isEmpty(t.url));
-                aliTranscodingCache[fileId] = transcoding;
-            }
-
-            const transcoding = aliTranscodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0];
-            if (!transcoding.plist) {
-                const resp = await req.get(transcoding.url, {
-                    headers: {
-                        'User-Agent': IOS_UA,
-                    },
-                });
-                transcoding.plist = HLS.parse(resp.data);
-                for (const s of transcoding.plist.segments) {
-                    if (!s.uri.startsWith('http')) {
-                        s.uri = new URL(s.uri, transcoding.url).toString();
-                    }
-                    s.suri = s.uri;
-                    s.uri = s.mediaSequenceNumber.toString() + '.ts';
-                }
-            }
-
-            if (end.endsWith('.ts')) {
-                _outResp.redirect(transcoding.plist.segments[parseInt(end.replace('.ts', ''))].suri);
-                return;
-            } else {
-                const hls = HLS.stringify(transcoding.plist);
-                let hlsHeaders = {
-                    'content-type': 'audio/x-mpegurl',
-                    'content-length': hls.length.toString(),
-                };
-                _outResp.code(200).headers(hlsHeaders);
-                return hls;
-            }
-        } else {
-            const flag = inReq.params.flag;
-            if (aliDownloadingCache[fileId]) {
-                const purl = aliDownloadingCache[fileId].url;
-                if (parseInt(purl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
-                    delete aliDownloadingCache[fileId];
-                }
-            }
-            if (!aliDownloadingCache[fileId]) {
-                const down = await Ali.getDownload(shareId, fileId, flag == 'down');
-                aliDownloadingCache[fileId] = down;
-            }
-            _outResp.redirect(aliDownloadingCache[fileId].url);
-            return;
-        }
+        return await Ali.proxy(inReq, _outResp);
     } else if (site == 'quark') {
-        let downUrl = '';
-        const ids = fileId.split('*');
-        const flag = inReq.params.flag;
-        if (what == 'trans') {
-            if (!quarkTranscodingCache[ids[1]]) {
-                quarkTranscodingCache[ids[1]] = (await Quark.getLiveTranscoding(shareId, decodeURIComponent(ids[0]), ids[1], ids[2])).filter((t) => t.accessable);
-            }
-            downUrl = quarkTranscodingCache[ids[1]].filter((t) => t.resolution.toLowerCase() == flag)[0].video_info.url;
-            _outResp.redirect(downUrl);
-            return;
-        } else {
-            if (!quarkDownloadingCache[ids[1]]) {
-                const down = await Quark.getDownload(shareId, decodeURIComponent(ids[0]), ids[1], ids[2], flag == 'down');
-                if (down) quarkDownloadingCache[ids[1]] = down;
-            }
-            downUrl = quarkDownloadingCache[ids[1]].download_url;
-            if (flag == 'redirect') {
-                _outResp.redirect(downUrl);
-                return;
-            }
-        }
-        return await Quark.chunkStream(
-            inReq,
-            _outResp,
-            downUrl,
-            ids[1],
-            Object.assign(
-                {
-                    Cookie: Quark.cookie,
-                },
-                Quark.baseHeader,
-            ),
-        );
+        return await Quark.proxy(inReq, _outResp);
     } else if (site == 'uc') {
-        let downUrl = '';
-        const ids = fileId.split('*');
-        const flag = inReq.params.flag;
-        if (what == 'trans') {
-            if (!ucTranscodingCache[ids[1]]) {
-                ucTranscodingCache[ids[1]] = (await UC.getLiveTranscoding(shareId, decodeURIComponent(ids[0]), ids[1], ids[2])).filter((t) => t.accessable);
-            }
-            downUrl = ucTranscodingCache[ids[1]].filter((t) => t.resolution.toLowerCase() == flag)[0].video_info.url;
-            _outResp.redirect(downUrl);
-            return;
-        } else {
-            if (!ucDownloadingCache[ids[1]]) {
-                const down = await UC.getDownload(shareId, decodeURIComponent(ids[0]), ids[1], ids[2], flag == 'down');
-                if (down) ucDownloadingCache[ids[1]] = down;
-            }
-            downUrl = ucDownloadingCache[ids[1]].download_url;
-            if (flag == 'redirect') {
-                _outResp.redirect(downUrl);
-                return;
-            }
-        }
-        return await UC.chunkStream(
-            inReq,
-            _outResp,
-            downUrl,
-            ids[1],
-            Object.assign(
-                {
-                    Cookie: UC.cookie,
-                },
-                UC.baseHeader,
-            ),
-        );
+        return await UC.proxy(inReq, _outResp);
     }
 }
 
 export async function play(inReq, _outResp) {
     const flag = inReq.body.flag;
-    const id = inReq.body.id;
-    const ids = id.split('*');
-    let idx = 0;
     if (flag.startsWith('阿里云盘')) {
-        const transcoding = await Ali.getLiveTranscoding(ids[0], ids[1]).filter((t) => !isEmpty(t.url));
-        aliTranscodingCache[ids[1]] = transcoding;
-        transcoding.sort((a, b) => b.template_width - a.template_width);
-        const p= ['超清','高清','标清','普画','极速'];
-        const arr =['QHD','FHD','HD','SD','LD'];
-        const urls = [];
-        const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/ali';
-        urls.push('原画');
-        urls.push(`${proxyUrl}/src/down/${ids[0]}/${ids[1]}/.bin`);
-        const result = {
-            parse: 0,
-            url: urls,
-        };
-        if (ids[2]) {
-            result.extra = {
-                subt: `${proxyUrl}/src/subt/${ids[0]}/${ids[2]}/.bin`,
-            };
-        }
-        transcoding.forEach((t) => {
-            idx = arr.indexOf(t.template_id);
-            urls.push(p[idx]);
-            urls.push(`${proxyUrl}/trans/${t.template_id.toLowerCase()}/${ids[0]}/${ids[1]}/.m3u8`);
-        });
-        return result;
+        return await Ali.play(inReq, _outResp);
     } else if (flag.startsWith('夸克网盘')) {
-        const transcoding = (await Quark.getLiveTranscoding(ids[0], ids[1], ids[2], ids[3])).filter((t) => t.accessable);
-        quarkTranscodingCache[ids[2]] = transcoding;
-        const urls = [];
-        const p= ['超清','蓝光','高清','标清','普画','极速'];
-        const arr =['4k','2k','super','high','low','normal'];
-        const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/quark';
-        urls.push('代理');
-        urls.push(`${proxyUrl}/src/down/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
-        urls.push('原画');
-        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
-        const result = {
-            parse: 0,
-            url: urls,
-            header: Object.assign(
-                {
-                    Cookie: Quark.cookie,
-                },
-                Quark.baseHeader,
-            ),
-        };
-        if (ids[3]) {
-            result.extra = {
-                subt: `${proxyUrl}/src/subt/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[4]}*${ids[5]}/.bin`,
-            };
-        }
-        transcoding.forEach((t) => {
-            idx = arr.indexOf(t.resolution);
-            urls.push(p[idx]);
-            urls.push(`${proxyUrl}/trans/${t.resolution.toLowerCase()}/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.mp4`);
-        });
-        return result;
+        return await Quark.play(inReq, _outResp);
     } else if (flag.startsWith('UC网盘')) {
-        const transcoding = (await UC.getLiveTranscoding(ids[0], ids[1], ids[2], ids[3])).filter((t) => t.accessable);
-        ucTranscodingCache[ids[2]] = transcoding;
-        const urls = [];
-        const p= ['超清','蓝光','高清','标清','普画','极速'];
-        const arr =['4k','2k','super','high','low','normal'];
-        const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/uc';
-        urls.push('代理');
-        urls.push(`${proxyUrl}/src/down/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
-        urls.push('原画');
-        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
-        const result = {
-            parse: 0,
-            url: urls,
-            header: Object.assign(
-                {
-                    Cookie: UC.cookie,
-                },
-                UC.baseHeader,
-            ),
-        };
-        if (ids[3]) {
-            result.extra = {
-                subt: `${proxyUrl}/src/subt/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[4]}*${ids[5]}/.bin`,
-            };
-        }
-        transcoding.forEach((t) => {
-            idx = arr.indexOf(t.resolution);
-            urls.push(p[idx]);
-            urls.push(`${proxyUrl}/trans/${t.resolution.toLowerCase()}/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.mp4`);
-        });
-        return result;
+        return await UC.play(inReq, _outResp);
     }
 }
 

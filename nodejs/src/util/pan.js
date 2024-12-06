@@ -63,7 +63,7 @@ export async function proxy(inReq, _outResp) {
 export async function play(inReq, _outResp) {
     const flag = inReq.body.flag;
     if (flag.startsWith('阿里云盘')) {
-        return await Ali.play(inReq, _outResp);
+        return await Ali.play_(inReq, _outResp);
     } else if (flag.startsWith('夸克网盘')) {
         return await Quark.play(inReq, _outResp);
     } else if (flag.startsWith('UC网盘')) {

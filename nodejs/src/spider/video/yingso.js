@@ -1,6 +1,6 @@
 import req from '../../util/req.js';
 import { load } from 'cheerio';
-import { ua, init ,_detail ,proxy ,play ,test ,isEmpty } from '../../util/pan.js';
+import { ua, init ,detail as _detail ,proxy ,play ,test ,isEmpty } from '../../util/pan.js';
 import CryptoJS from 'crypto-js';
 import dayjs from 'dayjs';
 

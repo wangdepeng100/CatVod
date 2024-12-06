@@ -1,5 +1,6 @@
 import req from '../../util/req.js';
-import { MAC_UA, formatPlayUrl } from '../../util/misc.js';
+import { formatPlayUrl } from '../../util/misc.js';
+import { ua, init as _init ,detail as _detail ,proxy ,play as _play } from '../../util/pan.js';
 import { load } from 'cheerio';
 import * as HLS from 'hls-parser';
 import * as Ali from '../../util/ali.js';
@@ -11,26 +12,15 @@ let url = '';
 async function request(reqUrl) {
     const res = await req.get(reqUrl, {
         headers: {
-            'User-Agent': MAC_UA,
+            'User-Agent': ua,
         },
     });
     return res.data;
 }
 
-// ali token 相关配置放在 index.config.js
-/*
-ali: {
-    token: 'xxxxxxxxxxxxxxxxxxxxxxxxx',
-    token280: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-},
-wogg: {
-    url: 'https://wogg.xyz',
-},
-*/
 async function init(inReq, _outResp) {
     url = inReq.server.config.wogg.url;
-    await Ali.initAli(inReq.server.db, inReq.server.config.ali);
-    await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
+    await _init(inReq, _outResp);
     return {};
 }
 
@@ -250,126 +240,7 @@ async function detail(inReq, _outResp) {
     };
 }
 
-const aliTranscodingCache = {};
-const aliDownloadingCache = {};
 
-const quarkTranscodingCache = {};
-const quarkDownloadingCache = {};
-
-async function proxy(inReq, outResp) {
-    await Ali.initAli(inReq.server.db, inReq.server.config.ali);
-    await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
-    const site = inReq.params.site;
-    const what = inReq.params.what;
-    const shareId = inReq.params.shareId;
-    const fileId = inReq.params.fileId;
-    if (site == 'ali') {
-        if (what == 'trans') {
-            const flag = inReq.params.flag;
-            const end = inReq.params.end;
-
-            if (aliTranscodingCache[fileId]) {
-                const purl = aliTranscodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0].url;
-                if (parseInt(purl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
-                    delete aliTranscodingCache[fileId];
-                }
-            }
-
-            if (aliTranscodingCache[fileId] && end.endsWith('.ts')) {
-                const transcoding = aliTranscodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0];
-                if (transcoding.plist) {
-                    const tsurl = transcoding.plist.segments[parseInt(end.replace('.ts', ''))].suri;
-                    if (parseInt(tsurl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
-                        delete aliTranscodingCache[fileId];
-                    }
-                }
-            }
-
-            if (!aliTranscodingCache[fileId]) {
-                const transcoding = await Ali.getLiveTranscoding(shareId, fileId);
-                aliTranscodingCache[fileId] = transcoding;
-            }
-
-            const transcoding = aliTranscodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0];
-            if (!transcoding.plist) {
-                const resp = await req.get(transcoding.url, {
-                    headers: {
-                        'User-Agent': MAC_UA,
-                    },
-                });
-                transcoding.plist = HLS.parse(resp.data);
-                for (const s of transcoding.plist.segments) {
-                    if (!s.uri.startsWith('http')) {
-                        s.uri = new URL(s.uri, transcoding.url).toString();
-                    }
-                    s.suri = s.uri;
-                    s.uri = s.mediaSequenceNumber.toString() + '.ts';
-                }
-            }
-
-            if (end.endsWith('.ts')) {
-                outResp.redirect(transcoding.plist.segments[parseInt(end.replace('.ts', ''))].suri);
-                return;
-            } else {
-                const hls = HLS.stringify(transcoding.plist);
-                let hlsHeaders = {
-                    'content-type': 'audio/x-mpegurl',
-                    'content-length': hls.length.toString(),
-                };
-                outResp.code(200).headers(hlsHeaders);
-                return hls;
-            }
-        } else {
-            const flag = inReq.params.flag;
-            if (aliDownloadingCache[fileId]) {
-                const purl = aliDownloadingCache[fileId].url;
-                if (parseInt(purl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
-                    delete aliDownloadingCache[fileId];
-                }
-            }
-            if (!aliDownloadingCache[fileId]) {
-                const down = await Ali.getDownload(shareId, fileId, flag == 'down');
-                aliDownloadingCache[fileId] = down;
-            }
-            outResp.redirect(aliDownloadingCache[fileId].url);
-            return;
-        }
-    } else if (site == 'quark') {
-        let downUrl = '';
-        const ids = fileId.split('*');
-        const flag = inReq.params.flag;
-        if (what == 'trans') {
-            if (!quarkTranscodingCache[ids[1]]) {
-                quarkTranscodingCache[ids[1]] = (await Quark.getLiveTranscoding(shareId, decodeURIComponent(ids[0]), ids[1], ids[2])).filter((t) => t.accessable);
-            }
-            downUrl = quarkTranscodingCache[ids[1]].filter((t) => t.resolution.toLowerCase() == flag)[0].video_info.url;
-            outResp.redirect(downUrl);
-            return;
-        } else {
-            if (!quarkDownloadingCache[ids[1]]) {
-                const down = await Quark.getDownload(shareId, decodeURIComponent(ids[0]), ids[1], ids[2], flag == 'down');
-                if (down) quarkDownloadingCache[ids[1]] = down;
-            }
-            downUrl = quarkDownloadingCache[ids[1]].download_url;
-            if (flag == 'redirect') {
-                outResp.redirect(downUrl);
-                return;
-            }
-        }
-        return await Quark.chunkStream(
-            inReq,
-            outResp,
-            downUrl,
-            ids[1],
-            Object.assign(
-                {
-                    Cookie: Quark.cookie,
-                },
-                Quark.baseHeader,
-            ),
-        );
-    }
-}
 
 function findElementIndex(arr, elem) {
   return arr.indexOf(elem);

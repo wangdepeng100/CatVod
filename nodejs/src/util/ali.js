@@ -581,20 +581,19 @@ export async function play(inReq, outResp) {
 
 export async function detail(shareUrl) {
     if (shareUrl.includes('https://www.alipan.com')) {
-        const shareData = Ali.getShareData(shareUrl);
+        const shareData = getShareData(shareUrl);
+        const result = {};
         if (shareData) {
-            const videos = await Ali.getFilesByShareUrl(shareData);
+            const videos = await getFilesByShareUrl(shareData);
             if (videos.length > 0) {
-                froms.push('阿里云盘-' + shareData.shareId);
-                urls.push(
-                    videos
+                result.from = '阿里云盘-' + shareData.shareId;
+                result.url = videos
                         .map((v) => {
                             const ids = [v.share_id, v.file_id, v.subtitle ? v.subtitle.file_id : ''];
                             const size = conversion(v.size);
                             return formatPlayUrl('', ` ${v.name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
                         })
-                        .join('#'),
-                );
+                        .join('#');
             }
         }
     }                

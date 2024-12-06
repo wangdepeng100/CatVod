@@ -594,3 +594,12 @@ export async function chunkStream(inReq, outResp, url, urlKey, headers, option) 
 
 const ucTranscodingCache = {};
 const ucDownloadingCache = {};
+
+export async function proxy(inReq, outResp) {
+}
+
+export async function detail(inReq, outResp) {
+}
+
+export async function play(inReq, outResp) {
+}

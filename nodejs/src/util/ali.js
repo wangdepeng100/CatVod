@@ -546,7 +546,7 @@ export async function proxy(inReq, outResp) {
         }
 }
 
-export async function detail(inReq, outResp) {
+export async function play(inReq, outResp) {
     const flag = inReq.body.flag;
     const id = inReq.body.id;
     const ids = id.split('*');
@@ -579,5 +579,23 @@ export async function detail(inReq, outResp) {
     }
 }
 
-export async function play(inReq, outResp) {
+export async function detail(shareUrl) {
+    if (shareUrl.includes('https://www.alipan.com')) {
+        const shareData = Ali.getShareData(shareUrl);
+        if (shareData) {
+            const videos = await Ali.getFilesByShareUrl(shareData);
+            if (videos.length > 0) {
+                froms.push('阿里云盘-' + shareData.shareId);
+                urls.push(
+                    videos
+                        .map((v) => {
+                            const ids = [v.share_id, v.file_id, v.subtitle ? v.subtitle.file_id : ''];
+                            const size = conversion(v.size);
+                            return formatPlayUrl('', ` ${v.name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
+                        })
+                        .join('#'),
+                );
+            }
+        }
+    }                
 }

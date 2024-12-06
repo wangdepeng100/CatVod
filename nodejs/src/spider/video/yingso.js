@@ -1,6 +1,6 @@
 import req from '../../util/req.js';
 import { load } from 'cheerio';
-import { ua, init ,detail0 ,proxy ,play ,test ,isEmpty } from '../../util/pan.js';
+import { ua, init ,_detail ,proxy ,play ,test ,isEmpty } from '../../util/pan.js';
 import CryptoJS from 'crypto-js';
 import dayjs from 'dayjs';
 
@@ -89,7 +89,7 @@ async function detail(inReq, _outResp) {
     let vod = ({
             vod_id: id,
         });
-        videos.push(await detail0(shareUrls ,vod));
+        videos.push(await _detail(shareUrls ,vod));
     }
     return {
         list: videos,

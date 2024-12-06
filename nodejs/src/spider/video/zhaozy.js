@@ -2,7 +2,7 @@ import req from '../../util/req.js';
 import { load } from 'cheerio';
 import dayjs from 'dayjs';
 import {initAli} from '../../util/ali.js';
-import { ua, detail0 , proxy , play , test } from '../../util/pan.js';
+import { ua, detail as _detail , proxy , play , test } from '../../util/pan.js';
 
 let url = 'https://zhaoziyuan1.cc';
 let patternAli = /(https:\/\/www\.(aliyundrive|alipan)\.com\/s\/[^"]+)/
@@ -60,7 +60,7 @@ async function detail(inReq, _outResp) {
       if (Object.keys(matches) !== 0) {
         const shareUrl = matches[0];
         let vod = {};
-        videos.push(await detail0(shareUrl, vod));
+        videos.push(await _detail(shareUrl, vod));
       }
     }
     return {

@@ -6,6 +6,7 @@ import * as Quark from './quark.js';
 import * as UC from './uc.js';
 import dayjs from 'dayjs';
 
+export { isEmpty };
 export const ua = IOS_UA;
 export const Qpic = 'https://img.omii.top/i/2024/03/17/vqmr8m.webp';
 export const Upic = 'https://img.omii.top/i/2024/03/17/vqmr8m.webp';

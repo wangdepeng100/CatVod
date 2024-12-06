@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
 import CryptoJS from 'crypto-js';
-import { IOS_UA } from './misc.js';
+import { IOS_UA, formatPlayUrl, conversion, isEmpty } from './misc.js';
 import req from './req.js';
+import * as HLS from 'hls-parser';
 
 // https://www.alipan.com/s/8stgXuDFsLy
 export function getShareData(url) {
@@ -480,10 +481,102 @@ export async function getDownload(shareId, fileId) {
 const aliTranscodingCache = {};
 const aliDownloadingCache = {};
 
+
 export async function proxy(inReq, outResp) {
+    const site = inReq.params.site;
+    const what = inReq.params.what;
+    const shareId = inReq.params.shareId;
+    const fileId = inReq.params.fileId;
+    if (site == 'ali') {
+        if (what == 'trans') {
+            const flag = inReq.params.flag;
+            const end = inReq.params.end;
+
+            if (aliTranscodingCache[fileId]) {
+                const purl = aliTranscodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0].url;
+                if (parseInt(purl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
+                    delete aliTranscodingCache[fileId];
+                }
+            }
+
+            if (aliTranscodingCache[fileId] && end.endsWith('.ts')) {
+                const transcoding = aliTranscodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0];
+                if (transcoding.plist) {
+                    const tsurl = transcoding.plist.segments[parseInt(end.replace('.ts', ''))].suri;
+                    if (parseInt(tsurl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
+                        delete aliTranscodingCache[fileId];
+                    }
+                }
+            }
+
+            if (!aliTranscodingCache[fileId]) {
+                const transcoding = await getLiveTranscoding(shareId, fileId).filter((t) => !isEmpty(t.url));
+                aliTranscodingCache[fileId] = transcoding;
+            }
+
+            const transcoding = aliTranscodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0];
+            if (!transcoding.plist) {
+                const resp = await req.get(transcoding.url, {
+                    headers: {
+                        'User-Agent': IOS_UA,
+                    },
+                });
+                transcoding.plist = HLS.parse(resp.data);
+                for (const s of transcoding.plist.segments) {
+                    if (!s.uri.startsWith('http')) {
+                        s.uri = new URL(s.uri, transcoding.url).toString();
+                    }
+                    s.suri = s.uri;
+                    s.uri = s.mediaSequenceNumber.toString() + '.ts';
+                }
+            }
+
+            if (end.endsWith('.ts')) {
+                outResp.redirect(transcoding.plist.segments[parseInt(end.replace('.ts', ''))].suri);
+                return;
+            } else {
+                const hls = HLS.stringify(transcoding.plist);
+                let hlsHeaders = {
+                    'content-type': 'audio/x-mpegurl',
+                    'content-length': hls.length.toString(),
+                };
+                outResp.code(200).headers(hlsHeaders);
+                return hls;
+            }
+        }
 }
 
 export async function detail(inReq, outResp) {
+    const flag = inReq.body.flag;
+    const id = inReq.body.id;
+    const ids = id.split('*');
+    let idx = 0;
+    if (flag.startsWith('阿里云盘')) {
+        const transcoding = await getLiveTranscoding(ids[0], ids[1]).filter((t) => !isEmpty(t.url));
+        aliTranscodingCache[ids[1]] = transcoding;
+        transcoding.sort((a, b) => b.template_width - a.template_width);
+        const p= ['超清','高清','标清','普画','极速'];
+        const arr =['QHD','FHD','HD','SD','LD'];
+        const urls = [];
+        const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/ali';
+        urls.push('原画');
+        urls.push(`${proxyUrl}/src/down/${ids[0]}/${ids[1]}/.bin`);
+        const result = {
+            parse: 0,
+            url: urls,
+        };
+        if (ids[2]) {
+            result.extra = {
+                subt: `${proxyUrl}/src/subt/${ids[0]}/${ids[2]}/.bin`,
+            };
+        }
+        transcoding.forEach((t) => {
+            idx = arr.indexOf(t.template_id);
+            urls.push(p[idx]);
+            urls.push(`${proxyUrl}/trans/${t.template_id.toLowerCase()}/${ids[0]}/${ids[1]}/.m3u8`);
+        });
+        return result;
+    }
 }
 
 export async function play(inReq, outResp) {

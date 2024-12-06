@@ -1,6 +1,6 @@
 import req from '../../util/req.js';
 import { load } from 'cheerio';
-import { ua, init ,detail0 ,proxy ,play ,test ,isEmpty } from '../../util/pan.js';
+import { ua, init ,detail as _detail ,proxy ,play ,test ,isEmpty } from '../../util/pan.js';
 
 let siteUrl = 'https://gitcafe.net/tool/alipaper/';
 let aliUrl = "https://www.aliyundrive.com/s/";
@@ -68,7 +68,7 @@ async function detail(inReq, _outResp) {
     let vod = ({
             vod_id: id,
         });
-        videos.push(await detail0(shareUrls ,vod));
+        videos.push(await _detail(shareUrls ,vod));
     }
     return {
         list: videos,

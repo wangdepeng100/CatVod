@@ -478,9 +478,28 @@ export async function getDownload(shareId, fileId) {
     return null;
 }
 
+export async function detail(shareUrl) {
+    if (shareUrl.includes('https://www.alipan.com')) {
+        const shareData = getShareData(shareUrl);
+        const result = {};
+        if (shareData) {
+            const videos = await getFilesByShareUrl(shareData);
+            if (videos.length > 0) {
+                result.from = '阿里云盘-' + shareData.shareId;
+                result.url = videos
+                        .map((v) => {
+                            const ids = [v.share_id, v.file_id, v.subtitle ? v.subtitle.file_id : ''];
+                            const size = conversion(v.size);
+                            return formatPlayUrl('', ` ${v.name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
+                        })
+                        .join('#');
+            }
+        }
+    }                
+}
+
 const aliTranscodingCache = {};
 const aliDownloadingCache = {};
-
 
 export async function proxy(inReq, outResp) {
     const site = inReq.params.site;
@@ -579,22 +598,3 @@ export async function play(inReq, outResp) {
     }
 }
 
-export async function detail(shareUrl) {
-    if (shareUrl.includes('https://www.alipan.com')) {
-        const shareData = getShareData(shareUrl);
-        const result = {};
-        if (shareData) {
-            const videos = await getFilesByShareUrl(shareData);
-            if (videos.length > 0) {
-                result.from = '阿里云盘-' + shareData.shareId;
-                result.url = videos
-                        .map((v) => {
-                            const ids = [v.share_id, v.file_id, v.subtitle ? v.subtitle.file_id : ''];
-                            const size = conversion(v.size);
-                            return formatPlayUrl('', ` ${v.name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
-                        })
-                        .join('#');
-            }
-        }
-    }                
-}

@@ -143,7 +143,7 @@ export async function proxy(inReq, _outResp) {
             }
 
             if (!aliTranscodingCache[fileId]) {
-                const transcoding = await Ali.getLiveTranscoding(shareId, fileId).filter((t) => t.url != '');
+                const transcoding = await Ali.getLiveTranscoding(shareId, fileId).filter((t) => !isEmpty(t.url));
                 aliTranscodingCache[fileId] = transcoding;
             }
 
@@ -268,7 +268,7 @@ export async function play(inReq, _outResp) {
     const ids = id.split('*');
     let idx = 0;
     if (flag.startsWith('阿里云盘')) {
-        const transcoding = await Ali.getLiveTranscoding(ids[0], ids[1]).filter((t) => t.url != '');
+        const transcoding = await Ali.getLiveTranscoding(ids[0], ids[1]).filter((t) => !isEmpty(t.url));
         aliTranscodingCache[ids[1]] = transcoding;
         transcoding.sort((a, b) => b.template_width - a.template_width);
         const p= ['超清','高清','标清','普画','极速'];

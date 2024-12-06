@@ -3,6 +3,7 @@ import CryptoJS from 'crypto-js';
 import { join } from 'path';
 import fs from 'fs';
 import { PassThrough } from 'stream';
+import { formatPlayUrl, conversion } from './misc.js';
 
 export function getShareData(url) {
     let regex = /https:\/\/drive\.uc\.cn\/s\/([^\\|#/?]+)/;
@@ -592,14 +593,109 @@ export async function chunkStream(inReq, outResp, url, urlKey, headers, option) 
     return stream;
 }
 
+export async function detail(shareUrl) {
+    if (shareUrl.includes('https://drive.uc.cn')) {
+        const shareData = getShareData(shareUrl);
+        const result = {};
+        if (shareData) {
+            const videos = await getFilesByShareUrl(shareData);
+            if (videos.length > 0) {
+                result.from = 'UC网盘-' + shareData.shareId;
+                result.url = videos
+                        .map((v) => {
+                            const ids = [shareData.shareId, v.stoken, v.fid, v.share_fid_token, v.subtitle ? v.subtitle.fid : '', v.subtitle ? v.subtitle.share_fid_token : ''];
+                            const size = conversion(v.size);
+                            return formatPlayUrl('', ` ${v.file_name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
+                        })
+                        .join('#')
+                );
+            }
+        }
+        return result;
+    }
+}
+
 const ucTranscodingCache = {};
 const ucDownloadingCache = {};
 
 export async function proxy(inReq, outResp) {
-}
-
-export async function detail(inReq, outResp) {
+    const site = inReq.params.site;
+    const what = inReq.params.what;
+    const shareId = inReq.params.shareId;
+    const fileId = inReq.params.fileId;
+    if (site == 'uc') {
+        let downUrl = '';
+        const ids = fileId.split('*');
+        const flag = inReq.params.flag;
+        if (what == 'trans') {
+            if (!ucTranscodingCache[ids[1]]) {
+                ucTranscodingCache[ids[1]] = (await getLiveTranscoding(shareId, decodeURIComponent(ids[0]), ids[1], ids[2])).filter((t) => t.accessable);
+            }
+            downUrl = ucTranscodingCache[ids[1]].filter((t) => t.resolution.toLowerCase() == flag)[0].video_info.url;
+            outResp.redirect(downUrl);
+            return;
+        } else {
+            if (!ucDownloadingCache[ids[1]]) {
+                const down = await getDownload(shareId, decodeURIComponent(ids[0]), ids[1], ids[2], flag == 'down');
+                if (down) ucDownloadingCache[ids[1]] = down;
+            }
+            downUrl = ucDownloadingCache[ids[1]].download_url;
+            if (flag == 'redirect') {
+                outResp.redirect(downUrl);
+                return;
+            }
+        }
+        return await chunkStream(
+            inReq,
+            outResp,
+            downUrl,
+            ids[1],
+            Object.assign(
+                {
+                    Cookie: cookie,
+                },
+                baseHeader,
+            ),
+        );
+    }
 }
 
 export async function play(inReq, outResp) {
+    const flag = inReq.body.flag;
+    const id = inReq.body.id;
+    const ids = id.split('*');
+    let idx = 0;
+    if (flag.startsWith('UC网盘')) {
+        const transcoding = (await getLiveTranscoding(ids[0], ids[1], ids[2], ids[3])).filter((t) => t.accessable);
+        ucTranscodingCache[ids[2]] = transcoding;
+        const urls = [];
+        const p= ['超清','蓝光','高清','标清','普画','极速'];
+        const arr =['4k','2k','super','high','low','normal'];
+        const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/uc';
+        urls.push('代理');
+        urls.push(`${proxyUrl}/src/down/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
+        urls.push('原画');
+        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
+        const result = {
+            parse: 0,
+            url: urls,
+            header: Object.assign(
+                {
+                    Cookie: cookie,
+                },
+                baseHeader,
+            ),
+        };
+        if (ids[3]) {
+            result.extra = {
+                subt: `${proxyUrl}/src/subt/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[4]}*${ids[5]}/.bin`,
+            };
+        }
+        transcoding.forEach((t) => {
+            idx = arr.indexOf(t.resolution);
+            urls.push(p[idx]);
+            urls.push(`${proxyUrl}/trans/${t.resolution.toLowerCase()}/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.mp4`);
+        });
+        return result;
+    }
 }

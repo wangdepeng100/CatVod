@@ -608,7 +608,6 @@ export async function detail(shareUrl) {
                             return formatPlayUrl('', ` ${v.file_name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
                         })
                         .join('#')
-                );
             }
         }
         return result;

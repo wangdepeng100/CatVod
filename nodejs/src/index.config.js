@@ -28,21 +28,34 @@ export default {
   live: { 
     contents: "https://gitee.com/galnt/cctv/raw/master/contents.txt",
     url: [
-      { name: "范明明 ", url: "https://live.fanmingming.com/tv/m3u/ipv6.m3u", },
       {
         name: "肥羊 ",
-        url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Ftindy/IPTV-URL/main/SXYD.m3u",
+        url: "https://iptv.887979.xyz/tv.m3u",
       },
-      { name: "优质源 ", url: "https://raw.gitmirror.com/wwb521/live/main/tv.txt", },
       {
-        name: "推荐",
-        url: "https://live.goodiptv.club/zhibo.txt",
-        index: "false"
+        name: "肥羊 ",
+        url: "https://live.wqwqwq.sbs/tv.m3u",
       },
-      { name: "ITV ", url: "https://mirror.ghproxy.com/raw.githubusercontent.com/ssili126/tv/main/itvlist.txt", index: "true"  },
-      { name: "道长源 ", "url": "https://mirror.ghproxy.com/raw.githubusercontent.com/dxawi/0/main/tvlive.txt" },
-      { name: "俊于源 ", "url": "http://home.jundie.top:81/Cat/tv/live.txt" },
-      { name: "普通源 ", url: "https://gitee.com/zhuyuxian/cyys/raw/master/live20220813.txt", index: "false" }
+      {
+        name: "港台 ",
+        url: "https://4g.wqwqwq.sbs/iptv.m3u",
+      },
+      {
+        name: "综合 ",
+        url: "https://git.acwing.com/weidi137137/id/-/raw/main/CHANGELOG",
+      },
+      {
+        name: "体育 ",
+        url: "https://tv.iill.top/m3u/Sport",
+      },
+      {
+        name: "网络 ",
+        url: "https://tv.iill.top/m3u/Live",
+      },
+      {
+        name: "电视 ",
+        url: "https://tv.iill.top/m3u/Gather",
+      },
     ]
   },
 

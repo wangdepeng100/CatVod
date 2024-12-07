@@ -18,22 +18,15 @@ const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit
 async function request(reqUrl, referer, mth, data, hd) {
     var headers = {
         "User-Agent": UA,
-        Cookie: _.map(cookie, (value, key) => key + "=" + value).join(";")
+        Cookie: cookie
     };
-    if (referer && (headers.referer = encodeURIComponent(referer)), (referer = await req(reqUrl, {
+    let resp = await req(reqUrl, {
             method: mth || "get",
             headers: headers,
             data: data,
             postType: "post" === mth ? "form" : ""
-        })).headers["set-cookie"])
-        for (const c of (_.isArray(referer.headers["set-cookie"]) ? referer.headers["set-cookie"].join(";") : referer.headers["set-cookie"]).split(";")) {
-            var tmp = c.trim();
-            if (tmp.startsWith("result=")) return cookie.result = tmp.substring(7), request(reqUrl, reqUrl, "post", {
-                result: cookie.result
-            });
-            if (tmp.startsWith("esc_search_captcha=1")) return cookie.esc_search_captcha = 1, delete cookie.result, request(reqUrl)
-        }
-    return referer.data;
+        })
+    return resp.data;
 }
 async function init(inReq, _outResp) {
     // siteKey = cfg.skey, siteType = cfg.stype

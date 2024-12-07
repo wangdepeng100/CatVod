@@ -41,21 +41,9 @@ export default {
         url: "https://4g.wqwqwq.sbs/iptv.m3u",
       },
       {
-        name: "综合 ",
-        url: "https://git.acwing.com/weidi137137/id/-/raw/main/CHANGELOG",
-      },
-      {
         name: "体育 ",
         url: "https://tv.iill.top/m3u/Sport",
-      },
-      {
-        name: "网络 ",
-        url: "https://tv.iill.top/m3u/Live",
-      },
-      {
-        name: "电视 ",
-        url: "https://tv.iill.top/m3u/Gather",
-      },
+      }
     ]
   },
 

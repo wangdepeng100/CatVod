@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import CryptoJS from 'crypto-js';
 import { IOS_UA, formatPlayUrl, conversion, isEmpty } from './misc.js';
 import req from './req.js';
+import { chunkStream } from './proxy.js';
 import * as HLS from 'hls-parser';
 
 // https://www.alipan.com/s/8stgXuDFsLy
@@ -511,10 +512,10 @@ export async function proxy(inReq, outResp) {
     const shareId = inReq.params.shareId;
     const fileId = inReq.params.fileId;
     if (site == 'ali') {
+        let downUrl = '';
+        const flag = inReq.params.flag;
+        const end = inReq.params.end;
         if (what == 'trans') {
-            const flag = inReq.params.flag;
-            const end = inReq.params.end;
-
             if (aliTranscodingCache[fileId]) {
                 const purl = aliTranscodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0].url;
                 if (parseInt(purl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
@@ -567,7 +568,6 @@ export async function proxy(inReq, outResp) {
                 return hls;
             }
         } else {
-            const flag = inReq.params.flag;
             if (aliDownloadingCache[fileId]) {
                 const purl = aliDownloadingCache[fileId].url;
                 if (parseInt(purl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
@@ -578,11 +578,19 @@ export async function proxy(inReq, outResp) {
                 const down = await getDownload(shareId, fileId);
                 aliDownloadingCache[fileId] = down;
             }
-            if (flag == 'down') {
-                outResp.redirect(aliDownloadingCache[fileId].url);
+            downUrl = aliDownloadingCache[fileId].url;
+            if (flag == 'redirect') {
+                outResp.redirect(downUrl);
                 return;
             }
         }
+        return await chunkStream(
+            inReq,
+            outResp,
+            downUrl,
+            shareTokenCache[ids[0]],
+            baseHeaders
+        );
     }
 }
 
@@ -600,9 +608,9 @@ export async function play(inReq, outResp) {
         const urls = [];
         const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/ali';
         urls.push('代理');
-        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${ids[1]}/.bin`);
-        urls.push('原画');
         urls.push(`${proxyUrl}/src/down/${ids[0]}/${ids[1]}/.bin`);
+        urls.push('原画');
+        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${ids[1]}/.bin`);
         const result = {
             parse: 0,
             url: urls,

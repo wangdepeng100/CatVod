@@ -15,7 +15,6 @@ import nongmin from './spider/video/nongmin.js';
 import yunpanres from './spider/video/yunpanres.js';
 import xiaoya from './spider/video/xiaoya.js';
 import af from './spider/video/anfun.js';
-import ysche from './spider/video/ysche.js';
 import cntv from './spider/video/cntv.js';
 import zxzj from './spider/video/zxzj.js';
 import nangua from './spider/video/ng.js';

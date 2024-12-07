@@ -112,18 +112,6 @@ m3u8cj: {
       categories: ["国产传媒", "国产自拍", "女优合集", "中文字幕", "亚洲无码", "亚洲有码", "国产探花", "人妻熟女", "强奸乱伦", "网曝门事件", "绿帽淫妻", "欧美情色", "动漫卡通", "美女主播", "三级伦理", "人妻熟女", "AV解说", "国产乱伦"],
       search: true
     }],
-    timim3u8: [{
-      name: "甜蜜源",
-      url: "https://timizy10.cc/api.php/provide/vod/from/timim3u8",
-      categories: ["日本有码", "日本无码", "中文字幕", "国产传媒", "制服诱惑", "国产视频", "国产自拍", "国产主播", "萝莉少女", "滴滴探花", "网曝黑料", "同性恋区", "欧美精品", "女优明星", "SM调教", "VP视角", "人妖系列", "AV解说", "激情动漫", "明星换脸", "精品三级", "热门头条", "口交足交", "自拍偷拍", "迷奸", "精选视频", "抖阴视频"],
-      search: true
-    }],
-    kkm3u8: [{
-      name: "写真源",
-      url: "https://kkzy.me/api.php/provide/vod/",
-      categories: ["写真资源", "韩国伦理", "西方伦理", "日本伦理", "动漫", "短视频主播", "两性课堂"],
-      search: true
-    }],
     askm3u8: [{
       name: "奥卡源",
       url: "https://aosikazy.com/api.php/provide/vod/",
@@ -137,11 +125,6 @@ m3u8cj: {
     ptm3u8: [{
       name: "葡萄源",
       url: "https://caiji.putaozyw.net/inc/apijson_vod.php",
-      search: true
-    }],
-    xbm3u8: [{
-      name: "雪豹源",
-      url: "https://api.xbapi.cc/api.php/provide/vod/",
       search: true
     }],
     ddm3u8: [{

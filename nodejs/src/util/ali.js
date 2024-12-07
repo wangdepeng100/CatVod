@@ -563,6 +563,20 @@ export async function proxy(inReq, outResp) {
                 outResp.code(200).headers(hlsHeaders);
                 return hls;
             }
+        } else {
+            const flag = inReq.params.flag;
+            if (aliDownloadingCache[fileId]) {
+                const purl = aliDownloadingCache[fileId].url;
+                if (parseInt(purl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
+                    delete aliDownloadingCache[fileId];
+                }
+            }
+            if (!aliDownloadingCache[fileId]) {
+                const down = await getDownload(shareId, fileId);
+                aliDownloadingCache[fileId] = down;
+            }
+            outResp.redirect(aliDownloadingCache[fileId].url);
+            return;
         }
     }
 }

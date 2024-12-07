@@ -44,7 +44,7 @@ import coco from './spider/book/coco.js';
 
 
 
-const spiders = [douban,live,wogg,lbpp,xiaoya,yunpanres,xzys,meijumi,czzy,hezi,ikanbot,nangua,ttian,zxzj,ddys,nongmin,rrys,klm,subaibai,cntv,huya,douyu,bili,clicli,_360ba,m3u8cj,appys, push, baseset, alist, _13bqg, laobaigs,ts230,bookan, copymanga,bg,fengche,baozimh,coco];
+const spiders = [douban,live,wogg,lbpp,xiaoya,yunpanres,xzys,meijumi,czzy,hezi,ikanbot,nangua,ttian,zxzj,ddys,nongmin,rrys,klm,subaibai,cntv,huya,douyu,bili,clicli,_360ba,m3u8cj,appys,maiyoux,xjzy,doll,netflav, push, baseset, alist, _13bqg, laobaigs,ts230,bookan, copymanga,bg,fengche,baozimh,coco];
 const spiderPrefix = '/spider';
 
 /**

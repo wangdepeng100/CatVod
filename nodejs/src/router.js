@@ -82,7 +82,7 @@ import lbpp from './spider/video/lbpp.js';
 import am from './spider/video/am.js';
 
 
-const spiders = [douban,live,am,wogg,wobg,tudou,lbpp,kkys,czzy,hezi,ikanbot,nangua,ttian,ttkx,meijumi,zxzj,xinshijue,ddys,nongmin,rrys,nkvod,xiaoya,yunpanres,xzys,klm,libvio,subaibai,kunyu77,nicoletv,clicli,boo,tuxiaobei,ub,cntv,huya,douyu,bili,_360ba,ktv,sharenice,mayiya,m3u8cj,appys,xzt,yingso,bqr,duanjuku,jihehe,upyun,pansearch,zhaozy,mipan,qupan,qkpanso,juzi,aipan,pikaso,xxpan,yiso, push, baseset, alist, _13bqg, laobaigs,ts230,bookan, copymanga,bg,fengche,baozimh,coco];
+const spiders = [douban,live,am,wogg,wobg,tudou,lbpp,xiaoya,yunpanres,xzys,meijumi,kkys,czzy,hezi,ikanbot,nangua,ttian,zxzj,ddys,nongmin,rrys,klm,subaibai,cntv,huya,douyu,bili,clicli,_360ba,m3u8cj,appys, push, baseset, alist, _13bqg, laobaigs,ts230,bookan, copymanga,bg,fengche,baozimh,coco];
 const spiderPrefix = '/spider';
 
 /**

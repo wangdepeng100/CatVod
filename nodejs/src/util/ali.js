@@ -575,8 +575,11 @@ export async function proxy(inReq, outResp) {
                 const down = await getDownload(shareId, fileId);
                 aliDownloadingCache[fileId] = down;
             }
-            outResp.redirect(aliDownloadingCache[fileId].url);
-            return;
+            if (flag == 'redirect') {
+                outResp.redirect(aliDownloadingCache[fileId].url);
+                return;
+            }
+
         }
     }
 }

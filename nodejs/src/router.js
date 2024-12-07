@@ -26,9 +26,6 @@ import _360ba from './spider/video/_360ba.js';
 import m3u8cj from './spider/video/m3u8cj.js';
 import appys from './spider/video/appys.js';
 import maiyoux from './spider/video/maiyoux.js';
-import xjzy from './spider/video/xjzy.js';
-import doll from './spider/video/doll.js';
-import netflav from './spider/video/netflav.js';
 import push from './spider/video/push.js';
 import baseset from './spider/video/baseset.js';
 import alist from './spider/pan/alist.js';
@@ -44,7 +41,7 @@ import coco from './spider/book/coco.js';
 
 
 
-const spiders = [douban,live,wogg,lbpp,xiaoya,yunpanres,xzys,meijumi,czzy,hezi,ikanbot,nangua,ttian,zxzj,ddys,nongmin,rrys,klm,subaibai,cntv,huya,douyu,bili,clicli,_360ba,m3u8cj,appys,maiyoux,xjzy,doll,netflav, push, baseset, alist, _13bqg, laobaigs,ts230,bookan, copymanga,bg,fengche,baozimh,coco];
+const spiders = [douban,live,wogg,lbpp,xiaoya,yunpanres,xzys,meijumi,czzy,hezi,ikanbot,nangua,ttian,zxzj,ddys,nongmin,rrys,klm,subaibai,cntv,huya,douyu,bili,clicli,_360ba,m3u8cj,appys,maiyoux, push, baseset, alist, _13bqg, laobaigs,ts230,bookan, copymanga,bg,fengche,baozimh,coco];
 const spiderPrefix = '/spider';
 
 /**

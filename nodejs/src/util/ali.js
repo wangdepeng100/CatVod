@@ -458,7 +458,10 @@ export async function getLiveTranscoding(shareId, fileId) {
         return transcoding.video_preview_play_info.live_transcoding_task_list;*/
     if (transcoding.video_preview_play_info && transcoding.video_preview_play_info.quick_video_list) {
         return transcoding.video_preview_play_info.quick_video_list;
+    } else if (transcoding.video_preview_play_info && transcoding.video_preview_play_info.live_transcoding_task_list) {
+        return transcoding.video_preview_play_info.live_transcoding_task_list;
     }
+        
     return null;
 }
 

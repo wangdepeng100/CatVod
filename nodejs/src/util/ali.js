@@ -579,7 +579,6 @@ export async function proxy(inReq, outResp) {
                 outResp.redirect(aliDownloadingCache[fileId].url);
                 return;
             }
-
         }
     }
 }

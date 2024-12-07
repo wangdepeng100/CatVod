@@ -36,7 +36,7 @@ async function testSupport(url, headers) {
 
 const urlHeadCache = {};
 let currentUrlKey = '';
-const cacheRoot = (process.env['NODE_PATH'] || '.') + '/uc_cache';
+const cacheRoot = (process.env['NODE_PATH'] || '.') + '/vod_cache';
 const maxCache = 1024 * 1024 * 100;
 
 function delAllCache(keepKey) {

@@ -2,7 +2,6 @@ import dayjs from 'dayjs';
 import CryptoJS from 'crypto-js';
 import { IOS_UA, formatPlayUrl, conversion, isEmpty } from './misc.js';
 import req from './req.js';
-import { chunkStream } from './proxy.js';
 import * as HLS from 'hls-parser';
 
 // https://www.alipan.com/s/8stgXuDFsLy

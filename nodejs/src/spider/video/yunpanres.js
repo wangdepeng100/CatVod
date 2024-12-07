@@ -1,7 +1,6 @@
 import req from '../../util/req.js';
 import pkg from 'lodash';
 const { _ } = pkg;
-import { MAC_UA, formatPlayUrl, conversion } from '../../util/misc.js';
 import { ua, init ,detail as _detail ,proxy ,play  } from '../../util/pan.js';
 import { load } from 'cheerio';
 import dayjs from 'dayjs';

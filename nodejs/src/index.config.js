@@ -26,7 +26,6 @@ export default {
         cookie: "buvid3=2EE7714E-396D-8B09-96FE-3D18B35CBD6E30391infoc; b_nut=1687691130; _uuid=6BEEEC104-35AF-A652-D66C-A61037EB9CCEF31032infoc; CURRENT_FNVAL=4048; rpdid=|(J~|~u~R||R0J'uY)~Ymm~~l; header_theme_version=CLOSE; fingerprint=979e0297d71b5da7d33048fd0f2105a6; buvid_fp_plain=undefined; buvid4=D599A569-8697-E141-B839-77A458D75A3432132-023062519-8ql5Wnsq%2BQ6f%2BEcmn2YT1A%3D%3D; enable_web_push=DISABLE; buvid_fp=979e0297d71b5da7d33048fd0f2105a6; hit-dyn-v2=1; home_feed_column=5; PVID=1; FEED_LIVE_VERSION=V_FAVOR_WATCH_LATER; browser_resolution=1599-821; bili_ticket=eyJhbGciOiJIUzI1NiIsImtpZCI6InMwMyIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTA3NzMyNzAsImlhdCI6MTcxMDUxNDAxMCwicGx0IjotMX0.aGEuplXBVtg3SsfVeiC37aO4j-RBnnz67J4TzxtD3IA; bili_ticket_expires=1710773210; bp_video_offset_1679307957=909120323202318338; CURRENT_QUALITY=80; SESSDATA=0b9e2f11%2C1726068775%2Cbe3a3%2A32CjCp-4wRSorM2ubk-A5LfLd72V9iOeCfrTDWjUZmfmPKGxd4pKhcIKHbkJl4yXbibT8SVkF3TnhVSmtxb05ZU0N4Q05LdVA1MXdDX3ZHNDdrT1hkU3FDY3dHYUFEQURuc0w4U1RzanZ2RXJvOXVQaFRrMUV5VjJBVlJSWmI3VWo5aUx6eUczcDR3IIEC; bili_jct=21a583be26b77f6f990df8cd4563eb0d; DedeUserID=3546647141288212; DedeUserID__ckMd5=6d38879780c538a1; b_lsid=FA49D8A5_18E4C7DD168"
     },
   live: { 
-    contents: "https://gitee.com/galnt/cctv/raw/master/contents.txt",
     url: [
       {
         name: "肥羊 ",

@@ -22,7 +22,6 @@ import huya from './spider/video/huya.js';
 import douyu from './spider/video/douyu.js';
 import bili from './spider/video/bili.js';
 import clicli from './spider/video/clicli.js';
-import af from './spider/video/anfun.js';
 import _360ba from './spider/video/_360ba.js';
 import m3u8cj from './spider/video/m3u8cj.js';
 import appys from './spider/video/appys.js';
@@ -41,7 +40,7 @@ import coco from './spider/book/coco.js';
 
 
 
-const spiders = [douban,live,wogg,lbpp,xiaoya,yunpanres,xzys,meijumi,czzy,hezi,ikanbot,nangua,ttian,zxzj,ddys,nongmin,rrys,klm,subaibai,cntv,huya,douyu,bili,clicli,af,_360ba,m3u8cj,appys, push, baseset, alist, _13bqg, laobaigs,ts230,bookan, copymanga,bg,fengche,baozimh,coco];
+const spiders = [douban,live,wogg,lbpp,xiaoya,yunpanres,xzys,meijumi,czzy,hezi,ikanbot,nangua,ttian,zxzj,ddys,nongmin,rrys,klm,subaibai,cntv,huya,douyu,bili,clicli,_360ba,m3u8cj,appys, push, baseset, alist, _13bqg, laobaigs,ts230,bookan, copymanga,bg,fengche,baozimh,coco];
 const spiderPrefix = '/spider';
 
 /**

@@ -584,13 +584,6 @@ export async function proxy(inReq, outResp) {
                 return;
             }
         }
-        return await chunkStream(
-            inReq,
-            outResp,
-            downUrl,
-            shareTokenCache[ids[0]],
-            baseHeaders
-        );
     }
 }
 
@@ -607,8 +600,6 @@ export async function play(inReq, outResp) {
         const arr =['QHD','FHD','HD','SD','LD'];
         const urls = [];
         const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/ali';
-        urls.push('代理');
-        urls.push(`${proxyUrl}/src/down/${ids[0]}/${ids[1]}/.bin`);
         urls.push('原画');
         urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${ids[1]}/.bin`);
         const result = {

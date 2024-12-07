@@ -74,6 +74,12 @@ xxpan: {
     url: 'https://xpanpan.site',
 },
 appys: {
+        ttmja: [{
+            name: '天天美剧',
+            url: 'https://www.ttmja.com/api.php/app/',
+            // categories: ['国产剧', '香港剧', '韩国剧', '欧美剧', '台湾剧', '日本剧', '海外剧', '泰国剧', '短剧', '动作片', '喜剧片', '爱情片', '科幻片', '恐怖片', '剧情片', '战争片', '动漫片', '大陆综艺', '港台综艺', '日韩综艺', '欧美综艺', '国产动漫', '日韩动漫', '欧美动漫', '港台动漫', '海外动漫', '记录片'],                        
+            search: true, //搜索开关 true开 false关
+        }],
         netfly: [{
             name: '奈飞',
             url: 'http://www.netfly.tv/api.php/app/',

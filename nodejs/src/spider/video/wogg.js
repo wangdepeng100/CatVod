@@ -2,9 +2,6 @@ import req from '../../util/req.js';
 import { formatPlayUrl } from '../../util/misc.js';
 import { ua, init as _init ,detail as _detail ,proxy ,play } from '../../util/pan.js';
 import { load } from 'cheerio';
-import * as HLS from 'hls-parser';
-import * as Ali from '../../util/ali.js';
-import * as Quark from '../../util/quark.js';
 import dayjs from 'dayjs';
 
 let url = '';

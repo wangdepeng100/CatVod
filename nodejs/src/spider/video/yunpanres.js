@@ -1,6 +1,7 @@
 import req from '../../util/req.js';
 import { load } from 'cheerio';
 import pkg from 'lodash';
+const { _ } = pkg;
 import dayjs from 'dayjs';
 import { ua, init ,detail as _detail ,proxy ,play ,test } from '../../util/pan.js';
 

@@ -39,10 +39,7 @@ async function category(inReq, _outResp) {
     if (pg > 1) {
         page = '/page/' + pg;
     }
-  //  const html = await request(url + '/category/' + (extend || tid) + page + '/' );
- //   const html =await request(url + "/" + tid  + page + '/');
     const html = await request(`${url}/${tid}${page}/`);
-   // console.log(pg);
     return parseHtmlList1(html, pg, tid);
 }
 
@@ -73,28 +70,27 @@ function parseHtmlList1(html, pg, tid) {
         const list = $('div#post_list_box article');
         let videos = [];
         for(var item of list) {
-        const $item = $(item);
-        const title = $item.find('a');
-       // console.log(title);
-        const img = $item.find('img');
-        const remarks = $item.find('.gxts').text();
-        videos.push({
-            vod_id: title.attr('href'),
-            vod_name: title.attr('title').match(/《(.*?)》/)[0].replace(/《|》/g,'').trim(),
-            vod_pic: img.attr('src'),
-            vod_remarks: remarks,
-        });
+            const $item = $(item);
+            const title = $item.find('a');
+            const img = $item.find('img');
+            const remarks = $item.find('.gxts').text();
+            videos.push({
+                vod_id: title.attr('href'),
+                vod_name: title.attr('title').match(/《(.*?)》/)[0].replace(/《|》/g,'').trim(),
+                vod_pic: img.attr('src'),
+                vod_remarks: remarks,
+            });
+        }
+        const pgCount = $('.page-numbers').length > 0 ? pg + 1 : pg;
+        const limit = 30;
+        return {
+            page: pg,
+            pagecount: pgCount,
+            limit: limit,
+            total: limit * pgCount,
+            list: videos,
+        };
     }
-//    const pgCount = _.isEmpty(videos) ? pg : pg + 1;
-    const pgCount = $('.page-numbers').length > 0 ? pg + 1 : pg;
-    const limit = 30;
-    return {
-        page: pg,
-        pagecount: pgCount,
-        limit: limit,
-        total: limit * pgCount,
-        list: videos,
-    };
 }
 
 
@@ -171,6 +167,66 @@ async function search(inReq, _outResp) {
     return parseHtmlList(html, pg);
 }
 
+async function test(inReq, outResp) {
+    const printErr = function (json) {
+        if (json.statusCode && json.statusCode == 500) {
+            // console.error(json);
+        }
+    };
+    const prefix = inReq.server.prefix;
+    const dataResult = {};
+    let resp = await inReq.server.inject().post(`${prefix}/init`);
+    dataResult.init = resp.json();
+    printErr(resp.json());
+    resp = await inReq.server.inject().post(`${prefix}/home`);
+    dataResult.home = resp.json();
+    printErr(resp.json());
+    if (dataResult.home.class.length > 0) {
+        resp = await inReq.server.inject().post(`${prefix}/category`).payload({
+            id: dataResult.home.class[0].type_id,
+            page: 1,
+            filter: true,
+            filters: {},
+        });
+        dataResult.category = resp.json();
+        printErr(resp.json());
+        if (dataResult.category.list.length > 0) {
+            resp = await inReq.server.inject().post(`${prefix}/detail`).payload({
+                id: dataResult.category.list[0].vod_id, // dataResult.category.list.map((v) => v.vod_id),
+            });
+            dataResult.detail = resp.json();
+            printErr(resp.json());
+            if (dataResult.detail.list && dataResult.detail.list.length > 0) {
+                dataResult.play = [];
+                for (const vod of dataResult.detail.list) {
+                    const flags = vod.vod_play_from.split('$$$');
+                    const ids = vod.vod_play_url.split('$$$');
+                    for (let j = 0; j < flags.length; j++) {
+                        const flag = flags[j];
+                        const urls = ids[j].split('#');
+                        for (let i = 0; i < urls.length && i < 2; i++) {
+                            resp = await inReq.server
+                                .inject()
+                                .post(`${prefix}/play`)
+                                .payload({
+                                    flag: flag,
+                                    id: urls[i].split('$')[1],
+                                });
+                            dataResult.play.push(resp.json());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    resp = await inReq.server.inject().post(`${prefix}/search`).payload({
+        wd: '光环',
+        page: 1,
+    });
+    dataResult.search = resp.json();
+    printErr(resp.json());
+    return dataResult;
+}
 
 export default {
     meta: {

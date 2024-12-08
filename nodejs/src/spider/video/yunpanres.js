@@ -1,33 +1,19 @@
 import req from '../../util/req.js';
-import pkg from 'lodash';
-const { _ } = pkg;
-import { MAC_UA, formatPlayUrl } from '../../util/misc.js';
 import { load } from 'cheerio';
-import * as HLS from 'hls-parser';
-import * as Ali from '../../util/ali.js';
-import { getDownload, getFilesByShareUrl, getLiveTranscoding, getShareData, initAli} from '../../util/ali.js';
+import { ua, init ,detail as _detail ,proxy ,play ,test } from '../../util/pan.js';
 import dayjs from 'dayjs';
-
 
 let url = 'https://res.yunpan.win';
 
-async function request(reqUrl, method, data, redirect) {
-    const res = await req(reqUrl, {
-        method: 'get',
+async function request(reqUrl) {
+    const resp = await req.get(reqUrl, {
         headers: {
-            'User-Agent': MAC_UA,
+            'User-Agent': ua,
             'Referer': url,
         },
     });
-    return res.data;
+    return resp.data;
 }
-
-
-async function init(inReq, _outResp) {
-    await initAli(inReq.server.db, inReq.server.config.ali);
-    return {}
-}
-
 
 async function home(inReq,_outResp){
     const classes = [{'type_id':'all','type_name':'首页'}];
@@ -41,8 +27,23 @@ async function home(inReq,_outResp){
         class: classes,
         filters: filterObj,
     });
+
+
+function fixImgUrl(imgUrl) {
+    if (imgUrl.startsWith('/img.php?url=')) {
+        return imgUrl.substr(13);
+    }
+    return imgUrl;
 }
 
+
+function getFilterUrlPart(extend, part) {
+    let result = '';
+    if (extend[part]) {
+        result = '/' + part + '/' + extend[part];
+    }
+    return result;
+}
 
 async function category(inReq, _outResp) {
     const tid = inReq.body.id;
@@ -53,39 +54,6 @@ async function category(inReq, _outResp) {
     const html = await request(url + '/?PageIndex=' + pg + '&PageSize=' + limit + '&Keyword=&YunPanSourceType=' + (extend.tag || '') + '&Type=' + (extend.class || '') + '&Tag=' + (extend.tag || ''));
     return parseHtmlList(html, pg, limit);
 }
-
-async function detail(inReq, _outResp) {
-    const shareUrl = inReq.body.id;
-    const videos = [];
-        let vod = ({
-            vod_id: shareUrl,
-        });
-        const froms = [];
-        const urls = [];
-            const shareData = Ali.getShareData(shareUrl);
-            if (shareData) {
-                const videos = await Ali.getFilesByShareUrl(shareData);
-                if (videos.length > 0) {
-                    froms.push('Ali-' + shareData.shareId);
-                    urls.push(
-                        videos
-                            .map((v) => {
-                                const ids = [v.share_id, v.file_id, v.subtitle ? v.subtitle.file_id : ''];
-                                return formatPlayUrl('', v.name) + '$' + ids.join('*');
-                            })
-                            .join('#'),
-                    );
-                }
-            }
-        vod.vod_play_from = froms.join('$$$');
-        vod.vod_play_url = urls.join('$$$');
-        videos.push(vod);
-    return {
-        list: videos,
-    };
-}
-
-
 
 function parseHtmlList(html, pg, limit) {
     const $ = load(html);
@@ -117,197 +85,33 @@ function parseHtmlList(html, pg, limit) {
     });
 }
 
-
-
-
-const transcodingCache = {};
-const downloadingCache = {};
-
-async function proxy(inReq, outResp) {
-    await Ali.initAli(inReq.server.db, inReq.server.config.ali);
-    const what = inReq.params.what;
-    const shareId = inReq.params.shareId;
-    const fileId = inReq.params.fileId;
-    if (what == 'trans') {
-        const flag = inReq.params.flag;
-        const end = inReq.params.end;
-
-        if (transcodingCache[fileId]) {
-            const purl = transcodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0].url;
-            if (parseInt(purl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
-                delete transcodingCache[fileId];
-            }
+async function detail(inReq, _outResp) {
+    const ids = !Array.isArray(inReq.body.id) ? [inReq.body.id] : inReq.body.id;
+    const videos = [];
+    for (const id of ids) {
+        const shareUrl = id;
+        const vodFromUrl = await _detail(shareUrl);
+        if (vodFromUrl){
+            vod.vod_play_from = vodFromUrl.froms;
+            vod.vod_play_url = vodFromUrl.urls;
         }
-
-        if (transcodingCache[fileId] && end.endsWith('.ts')) {
-            const transcoding = transcodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0];
-            if (transcoding.plist) {
-                const tsurl = transcoding.plist.segments[parseInt(end.replace('.ts', ''))].suri;
-                if (parseInt(tsurl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
-                    delete transcodingCache[fileId];
-                }
-            }
-        }
-
-        if (!transcodingCache[fileId]) {
-            const transcoding = await Ali.getLiveTranscoding(shareId, fileId);
-            transcodingCache[fileId] = transcoding;
-        }
-
-        const transcoding = transcodingCache[fileId].filter((t) => t.template_id.toLowerCase() == flag)[0];
-        if (!transcoding.plist) {
-            const resp = await req.get(transcoding.url, {
-                headers: {
-                    'User-Agent': MAC_UA,
-                },
-            });
-            transcoding.plist = HLS.parse(resp.data);
-            for (const s of transcoding.plist.segments) {
-                if (!s.uri.startsWith('http')) {
-                    s.uri = new URL(s.uri, transcoding.url).toString();
-                }
-                s.suri = s.uri;
-                s.uri = s.mediaSequenceNumber.toString() + '.ts';
-            }
-        }
-
-        if (end.endsWith('.ts')) {
-            outResp.redirect(transcoding.plist.segments[parseInt(end.replace('.ts', ''))].suri);
-            return;
-        } else {
-            const hls = HLS.stringify(transcoding.plist);
-            let hlsHeaders = {
-                'content-type': 'audio/x-mpegurl',
-                'content-length': hls.length.toString(),
-            };
-            outResp.code(200).headers(hlsHeaders);
-            return hls;
-        }
-    } else {
-        const flag = inReq.params.flag;
-        if (downloadingCache[fileId]) {
-            const purl = downloadingCache[fileId].url;
-            if (parseInt(purl.match(/x-oss-expires=(\d+)/)[1]) - dayjs().unix() < 15) {
-                delete downloadingCache[fileId];
-            }
-        }
-        if (!downloadingCache[fileId]) {
-            const down = await Ali.getDownload(shareId, fileId, flag == 'down');
-            downloadingCache[fileId] = down;
-        }
-        outResp.redirect(downloadingCache[fileId].url);
-        return;
+        videos.push(vod);
     }
-}
-
-async function play(inReq, _outResp) {
-    const id = inReq.body.id;
-    const ids = id.split('*');
-    const transcoding = await Ali.getLiveTranscoding(ids[0], ids[1]);
-    transcoding.sort((a, b) => b.template_width - a.template_width);
-    const urls = [];
-    const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy';
-
-    urls.push('SRC');
-    urls.push(`${proxyUrl}/src/down/${ids[0]}/${ids[1]}/.bin`);
-    const result = {
-        parse: 0,
-        url: urls,
+    return {
+        list: videos,
     };
-    if (ids[2]) {
-        result.extra = {
-            subt: `${proxyUrl}/src/subt/${ids[0]}/${ids[2]}/.bin`,
-        };
-    }
-	    transcoding.forEach((t) => {
-        urls.push(t.template_id);
-        urls.push(`${proxyUrl}/trans/${t.template_id.toLowerCase()}/${ids[0]}/${ids[1]}/.m3u8`);
-    });
-    return result;
 }
-
-
 
 
 async function search(inReq, _outResp) {
-   let pg = inReq.body.page;
-   const wd = inReq.body.wd;
+    let pg = inReq.body.page;
+    const wd = inReq.body.wd;
     if (pg <= 0) pg = 1;
     const limit = 12;
-    const html = await request(url + '/?PageIndex=' + pg + '&PageSize=' + limit + '&Keyword=' + encodeURIComponent(wd) + '&Type=&Tag=');
+    const html = await request(url + '/?PageIndex=' + pg + '&PageSize=' + limit + '&Keyword=' + encodeURIComponent(wd) + '&YunPanSourceType=&Type=&Tag=');
     return parseHtmlList(html, pg, limit);
 }
 
-
-
-
-
-async function test(inReq, outResp) {
-    try {
-        const printErr = function (json) {
-            if (json.statusCode && json.statusCode == 500) {
-                console.error(json);
-            }
-        };
-        const prefix = inReq.server.prefix;
-        const dataResult = {};
-        let resp = await inReq.server.inject().post(`${prefix}/init`);
-        dataResult.init = resp.json();
-        printErr(resp.json());
-        resp = await inReq.server.inject().post(`${prefix}/home`);
-        dataResult.home = resp.json();
-        printErr(resp.json());
-        if (dataResult.home.class && dataResult.home.class.length > 0) {
-            resp = await inReq.server.inject().post(`${prefix}/category`).payload({
-                id: dataResult.home.class[0].type_id,
-                page: 1,
-                filter: true,
-                filters: {},
-            });
-            dataResult.category = resp.json();
-            printErr(resp.json());
-            if (dataResult.category.list &&dataResult.category.list.length > 0) {
-                resp = await inReq.server.inject().post(`${prefix}/detail`).payload({
-                    id: dataResult.category.list[0].vod_id, // dataResult.category.list.map((v) => v.vod_id),
-                });
-                dataResult.detail = resp.json();
-                printErr(resp.json());
-                if (dataResult.detail.list && dataResult.detail.list.length > 0) {
-                    dataResult.play = [];
-                    for (const vod of dataResult.detail.list) {
-                        const flags = vod.vod_play_from.split('$$$');
-                        const ids = vod.vod_play_url.split('$$$');
-                        for (let j = 0; j < flags.length; j++) {
-                            const flag = flags[j];
-                            const urls = ids[j].split('#');
-                            for (let i = 0; i < urls.length && i < 2; i++) {
-                                resp = await inReq.server
-                                    .inject()
-                                    .post(`${prefix}/play`)
-                                    .payload({
-                                        flag: flag,
-                                        id: urls[i].split('$')[1],
-                                    });
-                                dataResult.play.push(resp.json());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        resp = await inReq.server.inject().post(`${prefix}/search`).payload({
-            wd: '爱',
-            page: 1,
-        });
-        dataResult.search = resp.json();
-        printErr(resp.json());
-        return dataResult;
-    } catch (err) {
-        console.error(err);
-        outResp.code(500);
-        return { err: err.message, tip: 'check debug console output' };
-    }
-}
 
 export default {
     meta: {
@@ -322,7 +126,7 @@ export default {
         fastify.post('/detail', detail);
         fastify.post('/play', play);
         fastify.post('/search', search);
-        fastify.get('/proxy/:what/:flag/:shareId/:fileId/:end', proxy);
+        fastify.get('/proxy/:site/:what/:flag/:shareId/:fileId/:end', proxy);
         fastify.get('/test', test);
     },
 };

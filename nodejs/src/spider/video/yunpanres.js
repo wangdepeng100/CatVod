@@ -1,7 +1,8 @@
 import req from '../../util/req.js';
 import { load } from 'cheerio';
-import { ua, init ,detail as _detail ,proxy ,play ,test } from '../../util/pan.js';
+import pkg from 'lodash';
 import dayjs from 'dayjs';
+import { ua, init ,detail as _detail ,proxy ,play ,test } from '../../util/pan.js';
 
 let url = 'https://res.yunpan.win';
 

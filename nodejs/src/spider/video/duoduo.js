@@ -87,7 +87,32 @@ async function detail(inReq, _outResp) {
  
         };
        
+		let video_items = $('.video-info-itemtitle');
+        for (const item of video_items) {
+            let key = $(item).text()
+            let vItems = $(item).next().find('a')
+            let value = vItems
+                .map((i, el) => {
+                    let text = $(el).text().trim() // 获取并去除空白字符
+                    return text ? text : null // 只有非空的文本才返回
+                })
+                .get() // 将 jQuery 对象转换为普通数组
+                .filter(Boolean) // 过滤掉 null 和空字符串
+                .join(', ') // 用逗号和空格分割
 
+            if (key.includes('剧情')) {
+                vod.vod_content = $(item)
+                    .next()
+                    .find('p')
+                    .text()
+                    .trim()
+            } else if (key.includes('导演')) {
+                vod.vod_director = value.trim()
+            } else if (key.includes('主演')) {
+                vod.vod_actor = value.trim()
+            }
+        }
+            
         const shareUrls = $('div.module-row-info p')
             .map((_, p) => p.children[0].data)
             .get();

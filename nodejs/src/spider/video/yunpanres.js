@@ -52,7 +52,7 @@ async function category(inReq, _outResp) {
     const extend = inReq.body.filters;
     if (pg <= 0) pg = 1;
     const limit = 12;
-    const html = await request(url + '/?PageIndex=' + pg + '&PageSize=' + limit + '&Keyword=&YunPanSourceType=' + (extend.tag || '') + '&Type=' + (extend.class || '') + '&Tag=' + (extend.tag || ''));
+    const html = await request(url + '/?PageIndex=' + pg + '&PageSize=' + limit + '&Keyword=&YunPanSourceType=' + (extend.pan || '') + '&Type=' + (extend.class || '') + '&Tag=' + (extend.tag || ''));
     return parseHtmlList(html, pg, limit);
 }
 

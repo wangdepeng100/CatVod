@@ -6,7 +6,6 @@ import { ua, init ,detail as _detail ,proxy ,play  } from '../../util/pan.js';
 
 let url = 'https://www.meijumi.xyz';
 
-
 async function request(reqUrl) {
     let res = await req(reqUrl, {
         method: 'get',
@@ -170,68 +169,6 @@ async function search(inReq, _outResp) {
   //  const html = await request(url + page + "/?s=" + encodeURIComponent(wd));
     const html = await request(`${url}/${page}/?s=${wd}`);
     return parseHtmlList(html, pg);
-}
-
-
-async function test(inReq, outResp) {
-        const printErr = function (json) {
-            if (json.statusCode && json.statusCode == 500) {
-                // console.error(json);
-            }
-        };
-        const prefix = inReq.server.prefix;
-        const dataResult = {};
-        let resp = await inReq.server.inject().post(`${prefix}/init`);
-        dataResult.init = resp.json();
-        printErr(resp.json());
-        resp = await inReq.server.inject().post(`${prefix}/home`);
-        dataResult.home = resp.json();
-        printErr(resp.json());
-        if (dataResult.home.class.length > 0) {
-            resp = await inReq.server.inject().post(`${prefix}/category`).payload({
-                id: dataResult.home.class[0].type_id,
-                page: 1,
-                filter: true,
-                filters: {},
-            });
-            dataResult.category = resp.json();
-            printErr(resp.json());
-            if (dataResult.category.list.length > 0) {
-                resp = await inReq.server.inject().post(`${prefix}/detail`).payload({
-                    id: dataResult.category.list[0].vod_id, // dataResult.category.list.map((v) => v.vod_id),
-                });
-                dataResult.detail = resp.json();
-                printErr(resp.json());
-                if (dataResult.detail.list && dataResult.detail.list.length > 0) {
-                    dataResult.play = [];
-                    for (const vod of dataResult.detail.list) {
-                        const flags = vod.vod_play_from.split('$$$');
-                        const ids = vod.vod_play_url.split('$$$');
-                        for (let j = 0; j < flags.length; j++) {
-                            const flag = flags[j];
-                            const urls = ids[j].split('#');
-                            for (let i = 0; i < urls.length && i < 2; i++) {
-                                resp = await inReq.server
-                                    .inject()
-                                    .post(`${prefix}/play`)
-                                    .payload({
-                                        flag: flag,
-                                        id: urls[i].split('$')[1],
-                                    });
-                                dataResult.play.push(resp.json());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        resp = await inReq.server.inject().post(`${prefix}/search`).payload({
-            wd: '光环',
-            page: 1,
-        });
-        dataResult.search = resp.json();
-        printErr(resp.json());
-        return dataResult;
 }
 
 

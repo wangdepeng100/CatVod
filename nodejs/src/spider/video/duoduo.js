@@ -111,14 +111,13 @@ async function search(inReq, _outResp) {
     if (page == 0) page = 1;
     const html = await request(`${url}/index.php/vod/search/wd/${wd}.html`);
     const $ = load(html);
-    const videos = $('div.module-items > div.module-search-item')
+    const videos = $('.module-search-item')
         .map((_, div) => {
-            const t = $(div).find('div.video-info-header h3 a')[0];
             return {
-                vod_id: t.attribs.href.match(/detail\/id\/(.*).html/)[1],
-                vod_name: t.attribs.title,
-                vod_pic: fixImgUrl($(div).find('div.module-item-pic img')[0].attribs['data-src']),
-                vod_remarks: $(div).find('a.video-serial').text(),
+                vod_id: $(div).find('.video-serial')[0].attribs.href,
+                vod_name: $(div).find('.video-serial')[0].attribs.title,
+                vod_pic: $(div).find('.module-item-pic > img')[0].attribs['data-src'],
+                vod_remarks: $($(div).find('.video-serial')[0]).text(),
             };
         })
         .get();

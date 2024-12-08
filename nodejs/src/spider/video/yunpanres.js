@@ -63,12 +63,12 @@ function parseHtmlList(html, pg, limit) {
     const videos = _.map(elements, (item) => {
         const $item = $(item);
         const matches = $item.find('.card-footer').html().match(/open\(\'(.*)\'\)/);
-        const urls = matches[1];
+        const shareUrl = matches[1];
         const $img = $item.find('img:first');
         const $title = $item.find('.card-title');
         const $size = $item.find('.card-text:contains(大小)');
         return {
-            vod_id: urls,
+            vod_id: shareUrl,
             vod_name: $title.text().trim(),
             vod_pic: url + $img.attr('src'),
             vod_remarks: $size.text().trim(),
@@ -90,6 +90,10 @@ function parseHtmlList(html, pg, limit) {
 async function detail(inReq, _outResp) {
     const ids = !Array.isArray(inReq.body.id) ? [inReq.body.id] : inReq.body.id;
     const videos = [];
+    const vod = {
+        vod_id: shareUrl,
+        vod_name: inReq.body.name,        
+    };
     for (const id of ids) {
         const shareUrl = id;
         const vodFromUrl = await _detail(shareUrl);

@@ -90,11 +90,11 @@ function parseHtmlList(html, pg, limit) {
 async function detail(inReq, _outResp) {
     const ids = !Array.isArray(inReq.body.id) ? [inReq.body.id] : inReq.body.id;
     const videos = [];
-    const vod = {
-        vod_id: shareUrl,
-        vod_name: inReq.body.name,        
-    };
+
     for (const id of ids) {
+        let vod = {
+            vod_id: id,
+        };
         const shareUrl = id;
         const vodFromUrl = await _detail(shareUrl);
         if (vodFromUrl){

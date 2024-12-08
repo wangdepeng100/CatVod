@@ -32,8 +32,11 @@ async function init(inReq, _outResp) {
 async function home(inReq,_outResp){
     const classes = [{'type_id':'all','type_name':'首页'}];
     const filterObj = {
-        'all':[{'key':'class','name':'分类','init':'','value':[{'n':'全部','v':''},{'n':'电影','v':'电影'},{'n':'电视剧','v':'电视剧'},{'n':'动画','v':'动画'},{'n':'纪录片','v':'纪录片'},{'n':'综艺','v':'综艺'}]},{'key':'class','name':'','init':'','wrap':1,'value':[{'n':'剧情','v':'剧情'},{'n':'动作','v':'动作'},{'n':'冒险','v':'冒险'},{'n':'奇幻','v':'奇幻'},{'n':'科幻','v':'科幻'},{'n':'喜剧','v':'喜剧'},{'n':'爱情','v':'爱情'},{'n':'悬疑','v':'悬疑'},{'n':'历史','v':'历史'},{'n':'战争','v':'战争'},{'n':'恐怖','v':'恐怖'},{'n':'惊悚','v':'惊悚'},{'n':'家庭','v':'家庭'},{'n':'搞笑','v':'搞笑'},{'n':'歌舞','v':'歌舞'},{'n':'音乐','v':'音乐'},{'n':'歌曲','v':'歌曲'},{'n':'真人秀','v':'真人秀'}]},{'key':'tag','name':'标签','init':'','value':[{'n':'全部','v':''},{'n':'1080p','v':'1080p'},{'n':'4k','v':'4k'},{'n':'高码率','v':'高码率'},{'n':'杜比视界','v':'杜比视界'},{'n':'画质控','v':'画质控'}]}],
-   };
+        'all':[
+            {'key':'class','name':'分类','init':'','value':[{'n':'全部','v':''},{'n':'电影','v':'电影'},{'n':'电视剧','v':'电视剧'},{'n':'动画','v':'动画'},{'n':'纪录片','v':'纪录片'},{'n':'综艺','v':'综艺'}]},
+            {'key':'tag','name':'标签','init':'','value':[{'n':'剧情','v':'剧情'},{'n':'动作','v':'动作'},{'n':'冒险','v':'冒险'},{'n':'奇幻','v':'奇幻'},{'n':'科幻','v':'科幻'},{'n':'喜剧','v':'喜剧'},{'n':'爱情','v':'爱情'},{'n':'悬疑','v':'悬疑'},{'n':'历史','v':'历史'},{'n':'战争','v':'战争'},{'n':'恐怖','v':'恐怖'},{'n':'惊悚','v':'惊悚'},{'n':'家庭','v':'家庭'},{'n':'搞笑','v':'搞笑'},{'n':'歌舞','v':'歌舞'},{'n':'音乐','v':'音乐'},{'n':'歌曲','v':'歌曲'},{'n':'真人秀','v':'真人秀'},{'n':'1080p','v':'1080p'},{'n':'4k','v':'4k'},{'n':'高码率','v':'高码率'},{'n':'杜比视界','v':'杜比视界'},{'n':'画质控','v':'画质控'}]},
+            {'key':'pan','name':'云盘','init':'','value':[{'n':'全部','v':''},{'n':'阿里云盘','v':'1'},{'n':'夸克云盘','v':'2'}]}]
+    };
     return ({
         class: classes,
         filters: filterObj,
@@ -47,7 +50,7 @@ async function category(inReq, _outResp) {
     const extend = inReq.body.filters;
     if (pg <= 0) pg = 1;
     const limit = 12;
-    const html = await request(url + '/?PageIndex=' + pg + '&PageSize=' + limit + '&Keyword=&Type=' + (extend.class || '') + '&Tag=' + (extend.tag || ''));
+    const html = await request(url + '/?PageIndex=' + pg + '&PageSize=' + limit + '&Keyword=&YunPanSourceType=' + (extend.tag || '') + '&Type=' + (extend.class || '') + '&Tag=' + (extend.tag || ''));
     return parseHtmlList(html, pg, limit);
 }
 

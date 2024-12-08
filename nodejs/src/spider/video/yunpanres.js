@@ -27,6 +27,7 @@ async function home(inReq,_outResp){
         class: classes,
         filters: filterObj,
     });
+}
 
 
 function fixImgUrl(imgUrl) {

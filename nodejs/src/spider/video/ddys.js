@@ -16,9 +16,9 @@ async function request(reqUrl) {
     const res = await req(reqUrl, {
         method: 'get',
         headers: {
-            'Host': HOST.match(/.*\:\/\/(.*)/)[1],
+            'Host': DOMAIN,
             'User-Agent': UA,
-            'Referer': HOST,
+            'Referer': HOST + '/',
             'Accept-Encoding': 'gzip',
         },
     });
@@ -33,8 +33,8 @@ async function init(inReq, _outResp) {
 async function home(filter) {
     const classes = [{'type_id':'class','type_name':'类型'},{'type_id':'movie','type_name':'电影'},{'type_id':'airing','type_name':'热映中'},{'type_id':'drama','type_name':'剧集'},{'type_id':'anime','type_name':'动画'},{'type_id':'documentary','type_name':'纪录片'},{'type_id':'variety','type_name':'综艺'}];
     const filterObj = {
-        'class':[{'key':'tag','name':'标签','init':'recommend','value':[{'n':'站长推荐','v':'recommend'},{'n':'动作','v':'action'},{'n':'喜剧','v':'comedy'},{'n':'爱情','v':'romance'},{'n':'科幻','v':'sci-fi'},{'n':'犯罪','v':'crime'},{'n':'悬疑','v':'mystery'},{'n':'恐怖','v':'horror'}]}],
-        'movie':[{'key':'type','name':'分类','init':'','value':[{'n':'全部','v':''},{'n':'欧美电影','v':'western-movie'},{'n':'日韩电影','v':'asian-movie'},{'n':'华语电影','v':'chinese-movie'}]}],
+        'class':[{'key':'tag','name':'标签','init':'recommend','value':[{'n':'推荐','v':'recommend'},{'n':'动作','v':'action'},{'n':'喜剧','v':'comedy'},{'n':'爱情','v':'romance'},{'n':'科幻','v':'sci-fi'},{'n':'犯罪','v':'crime'},{'n':'悬疑','v':'mystery'},{'n':'恐怖','v':'horror'}]}],
+        'movie':[{'key':'type','name':'分类','init':'','value':[{'n':'全部','v':''},{'n':'欧美','v':'western-movie'},{'n':'日韩','v':'asian-movie'},{'n':'华语','v':'chinese-movie'}]}],
         'drama':[{'key':'type','name':'分类','init':'','value':[{'n':'全部','v':''},{'n':'欧美剧','v':'western-drama'},{'n':'日剧','v':'jp-drama'},{'n':'韩剧','v':'kr-drama'},{'n':'华语剧','v':'cn-drama'},{'n':'其他地区','v':'other'}]}],
         'anime':[{'key':'type','name':'分类','init':'','value':[{'n':'全部','v':''},{'n':'本季新番','v':'new-bangumi'}]}]
     };

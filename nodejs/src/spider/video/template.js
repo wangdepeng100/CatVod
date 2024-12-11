@@ -35,6 +35,21 @@ async function home(_inReq, _outResp) {
     };
 }
 
+
+function suffixUrl(hrefs, separator, flag) {
+    //type-1-p-2
+    //type/1/p/2
+    const href = ['', '', '', '', '', '', '', '', '', '', page, '', '', ''];
+    const href = [tid, '', '', '', '', '', '', '', page, '', '', ''];
+    const suffix = {
+        k: 'p',
+        v: 'k'
+    }
+    
+    
+    const l = [], m = [], r = [];
+}
+
 function fixImgUrl(imgUrl) {
     if (imgUrl.startsWith('/img.php?url=')) {
         return imgUrl.substr(13);

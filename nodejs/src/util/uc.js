@@ -1,9 +1,6 @@
 import req from './req.js';
 import chunkStream  from './chunk.js';
 import CryptoJS from 'crypto-js';
-import { join } from 'path';
-import fs from 'fs';
-import { PassThrough } from 'stream';
 import { formatPlayUrl, conversion } from './misc.js';
 
 export function getShareData(url) {

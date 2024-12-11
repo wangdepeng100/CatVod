@@ -20,7 +20,7 @@ async function request(reqUrl) {
 }
 
 async function home(_inReq, _outResp) {
-    const classes = [{'type_id':'usa','type_name':'美剧'},{'type_id':'usa/xuanyi','type_name':'灵异/惊悚'},{'type_id':'usa/mohuan','type_name':'魔幻/科幻'},{'type_id':'usa/zuian','type_name':'罪案/动作谍战'},{'type_id':'usa/qinggan','type_name':'剧情/历史'},{'type_id':'usa/xiju','type_name':'喜剧'},{'type_id':'usa/yiwu','type_name':'律政/医务'},{'type_id':'usa/katong','type_name':'动漫/动画'},{'type_id':'usa/jilu','type_name':'纪录片'},{'type_id':'usa/zongyi','type_name':'综艺/真人秀'},{'type_id':'en','type_name':'英剧'},{'type_id':'news','type_name':'最近更新'}];
+    const classes = [{'type_id':'usa','type_name':'美剧'},{'type_id':'usa/xuanyi','type_name':'灵异'},{'type_id':'usa/mohuan','type_name':'科幻'},{'type_id':'usa/zuian','type_name':'罪案'},{'type_id':'usa/qinggan','type_name':'剧情'},{'type_id':'usa/xiju','type_name':'喜剧'},{'type_id':'usa/yiwu','type_name':'律政'},{'type_id':'usa/katong','type_name':'动漫'},{'type_id':'usa/jilu','type_name':'纪录片'},{'type_id':'usa/zongyi','type_name':'综艺'},{'type_id':'en','type_name':'英剧'},{'type_id':'news','type_name':'最近更新'}];
     const filterObj = {};
 
     return {

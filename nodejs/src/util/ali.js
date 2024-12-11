@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import CryptoJS from 'crypto-js';
-import { IOS_UA, formatPlayUrl, conversion, isEmpty } from './misc.js';
+import { IOS_UA, formatPlayUrl, conversion, isEmpty, lcs, findBestLCS, delay} from './misc.js';
 import req from './req.js';
 import * as HLS from 'hls-parser';
 
@@ -47,89 +47,6 @@ export async function initAli(db, cfg) {
     if (localCfg[oriCfg.token280]) {
         config.token280 = localCfg[oriCfg.token280];
     }
-}
-
-/**
- * 字符串相似度匹配
- * @returns
- */
-function lcs(str1, str2) {
-    if (!str1 || !str2) {
-        return {
-            length: 0,
-            sequence: '',
-            offset: 0,
-        };
-    }
-
-    var sequence = '';
-    var str1Length = str1.length;
-    var str2Length = str2.length;
-    var num = new Array(str1Length);
-    var maxlen = 0;
-    var lastSubsBegin = 0;
-
-    for (var i = 0; i < str1Length; i++) {
-        var subArray = new Array(str2Length);
-        for (var j = 0; j < str2Length; j++) {
-            subArray[j] = 0;
-        }
-        num[i] = subArray;
-    }
-    var thisSubsBegin = null;
-    for (i = 0; i < str1Length; i++) {
-        for (j = 0; j < str2Length; j++) {
-            if (str1[i] !== str2[j]) {
-                num[i][j] = 0;
-            } else {
-                if (i === 0 || j === 0) {
-                    num[i][j] = 1;
-                } else {
-                    num[i][j] = 1 + num[i - 1][j - 1];
-                }
-
-                if (num[i][j] > maxlen) {
-                    maxlen = num[i][j];
-                    thisSubsBegin = i - num[i][j] + 1;
-                    if (lastSubsBegin === thisSubsBegin) {
-                        // if the current LCS is the same as the last time this block ran
-                        sequence += str1[i];
-                    } else {
-                        // this block resets the string builder if a different LCS is found
-                        lastSubsBegin = thisSubsBegin;
-                        sequence = ''; // clear it
-                        sequence += str1.substr(lastSubsBegin, i + 1 - lastSubsBegin);
-                    }
-                }
-            }
-        }
-    }
-    return {
-        length: maxlen,
-        sequence: sequence,
-        offset: thisSubsBegin,
-    };
-}
-
-function findBestLCS(mainItem, targetItems) {
-    const results = [];
-    let bestMatchIndex = 0;
-
-    for (let i = 0; i < targetItems.length; i++) {
-        const currentLCS = lcs(mainItem.name, targetItems[i].name);
-        results.push({ target: targetItems[i], lcs: currentLCS });
-        if (currentLCS.length > results[bestMatchIndex].lcs.length) {
-            bestMatchIndex = i;
-        }
-    }
-
-    const bestMatch = results[bestMatchIndex];
-
-    return { allLCS: results, bestMatch: bestMatch, bestMatchIndex: bestMatchIndex };
-}
-
-function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function api(url, data, headers, retry) {
@@ -203,32 +120,6 @@ async function login() {
     }
 }
 
-/*async function openAuth() {
-    if (!oauth.access_token || oauth.expire_time - dayjs().unix() < 120) {
-        let openResp = await req
-            .post(
-                'https://aliyundrive-oauth.messense.me/oauth/access_token',
-                {
-                    grant_type: 'refresh_token',
-                    refresh_token: config.token280,
-                },
-                {
-                    headers: baseHeaders,
-                }
-            )
-            .catch((err) => {
-                return err.response || { status: 500, data: {} };
-            });
-        if (openResp.status == 200) {
-            oauth = openResp.data;
-            const info = JSON.parse(CryptoJS.enc.Base64.parse(openResp.data.access_token.split('.')[1]).toString(CryptoJS.enc.Utf8));
-            oauth.expire_time = info.exp;
-            oauth.auth = `${oauth.token_type} ${oauth.access_token}`;
-            config.token280 = oauth.refresh_token;
-            await localDb.push(localTokenPath + '/' + oriCfg.token280, oauth.refresh_token);
-        }
-    }
-}*/
 // 兼容alist280, webdav280处理
 async function openAuth() {
     if (!oauth.access_token || oauth.expire_time - dayjs().unix() < 120) {
@@ -456,13 +347,8 @@ export async function getLiveTranscoding(shareId, fileId) {
     });
     /*if (transcoding.video_preview_play_info && transcoding.video_preview_play_info.live_transcoding_task_list) {
         return transcoding.video_preview_play_info.live_transcoding_task_list;*/
-    if (transcoding.video_preview_play_info && transcoding.video_preview_play_info.quick_video_list) {
-        return transcoding.video_preview_play_info.quick_video_list;
-    } else if (transcoding.video_preview_play_info && transcoding.video_preview_play_info.live_transcoding_task_list) {
-        return transcoding.video_preview_play_info.live_transcoding_task_list;
-    }
-        
-    return null;
+    const playInfo = transcoding?.video_preview_play_info;
+    return playInfo?.quick_video_list ?? playInfo?.live_transcoding_task_list;
 }
 
 export async function getDownload(shareId, fileId) {
@@ -533,7 +419,7 @@ export async function proxy(inReq, outResp) {
             }
 
             if (!aliTranscodingCache[fileId]) {
-                const transcoding = await getLiveTranscoding(shareId, fileId);
+                const transcoding = await getLiveTranscoding(shareId, fileId).filter((t) => t.url);
                 aliTranscodingCache[fileId] = transcoding;
             }
 
@@ -592,7 +478,7 @@ export async function play(inReq, outResp) {
     const ids = id.split('*');
     let idx = 0;
     if (flag.startsWith('阿里云盘')) {
-        const transcoding = await getLiveTranscoding(ids[0], ids[1]);
+        const transcoding = await getLiveTranscoding(ids[0], ids[1]).filter((t) => t.url);
         aliTranscodingCache[ids[1]] = transcoding;
         transcoding.sort((a, b) => b.template_width - a.template_width);
         const p= ['超清','高清','标清','普画','极速'];

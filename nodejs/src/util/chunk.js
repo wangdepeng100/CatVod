@@ -65,7 +65,7 @@ function delAllCache(keepKey) {
     }
 }
 
-export async function chunkStream(inReq, outResp, url, urlKey, headers, option) {
+async function chunkStream(inReq, outResp, url, urlKey, headers, option) {
     urlKey = urlKey || CryptoJS.enc.Hex.stringify(CryptoJS.MD5(url)).toString();
     if (currentUrlKey !== urlKey) {
         delAllCache(urlKey);
@@ -239,3 +239,5 @@ export async function chunkStream(inReq, outResp, url, urlKey, headers, option) 
     });
     return stream;
 }
+
+export default chunkStream;

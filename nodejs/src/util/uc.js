@@ -1,7 +1,7 @@
 import req from './req.js';
 import chunkStream  from './chunk.js';
 import CryptoJS from 'crypto-js';
-import { formatPlayUrl, conversion } from './misc.js';
+import { formatPlayUrl, conversion, lcs, findBestLCS, delay} from './misc.js';
 
 export function getShareData(url) {
     let regex = /https:\/\/drive\.uc\.cn\/s\/([^\\|#/?]+)/;

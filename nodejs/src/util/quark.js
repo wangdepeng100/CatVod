@@ -1,7 +1,7 @@
 import req from './req.js';
 import chunkStream  from './chunk.js';
 import CryptoJS from 'crypto-js';
-import { formatPlayUrl, conversion } from './misc.js';
+import { formatPlayUrl, conversion, lcs, findBestLCS, delay} from './misc.js';
 
 export function getShareData(url) {
     let regex = /https:\/\/pan\.quark\.cn\/s\/([^\\|#/]+)/;
@@ -41,89 +41,6 @@ export async function initQuark(db, cfg) {
     if (localCfg[ckey]) {
         cookie = localCfg[ckey];
     }
-}
-
-/**
- * 字符串相似度匹配
- * @returns
- */
-function lcs(str1, str2) {
-    if (!str1 || !str2) {
-        return {
-            length: 0,
-            sequence: '',
-            offset: 0,
-        };
-    }
-
-    var sequence = '';
-    var str1Length = str1.length;
-    var str2Length = str2.length;
-    var num = new Array(str1Length);
-    var maxlen = 0;
-    var lastSubsBegin = 0;
-
-    for (var i = 0; i < str1Length; i++) {
-        var subArray = new Array(str2Length);
-        for (var j = 0; j < str2Length; j++) {
-            subArray[j] = 0;
-        }
-        num[i] = subArray;
-    }
-    var thisSubsBegin = null;
-    for (i = 0; i < str1Length; i++) {
-        for (j = 0; j < str2Length; j++) {
-            if (str1[i] !== str2[j]) {
-                num[i][j] = 0;
-            } else {
-                if (i === 0 || j === 0) {
-                    num[i][j] = 1;
-                } else {
-                    num[i][j] = 1 + num[i - 1][j - 1];
-                }
-
-                if (num[i][j] > maxlen) {
-                    maxlen = num[i][j];
-                    thisSubsBegin = i - num[i][j] + 1;
-                    if (lastSubsBegin === thisSubsBegin) {
-                        // if the current LCS is the same as the last time this block ran
-                        sequence += str1[i];
-                    } else {
-                        // this block resets the string builder if a different LCS is found
-                        lastSubsBegin = thisSubsBegin;
-                        sequence = ''; // clear it
-                        sequence += str1.substr(lastSubsBegin, i + 1 - lastSubsBegin);
-                    }
-                }
-            }
-        }
-    }
-    return {
-        length: maxlen,
-        sequence: sequence,
-        offset: thisSubsBegin,
-    };
-}
-
-function findBestLCS(mainItem, targetItems) {
-    const results = [];
-    let bestMatchIndex = 0;
-
-    for (let i = 0; i < targetItems.length; i++) {
-        const currentLCS = lcs(mainItem.name, targetItems[i].name);
-        results.push({ target: targetItems[i], lcs: currentLCS });
-        if (currentLCS.length > results[bestMatchIndex].lcs.length) {
-            bestMatchIndex = i;
-        }
-    }
-
-    const bestMatch = results[bestMatchIndex];
-
-    return { allLCS: results, bestMatch: bestMatch, bestMatchIndex: bestMatchIndex };
-}
-
-function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function api(url, data, headers, method, retry) {

@@ -10,7 +10,7 @@ export function getShareData(url) {
     if (matches) {
         return {
             shareCode: match[1] || match[3],
-            passWord: match[2] || match[4] || '',
+            password: match[2] || match[4] || '',
         };
     }
     return null;
@@ -26,7 +26,7 @@ let ckey = null;
 
 const apiUrl = 'https://cloud.189.cn/api/';
 export let cookie = '';
-const shareTokenCache = {};
+const shareIdCache = {};
 
 export async function initTyi(db, cfg) {
     if (cookie) return;
@@ -65,15 +65,7 @@ async function api(url, data, headers, method, retry) {
                       return err.response || { status: 500, data: {} };
                   });
     const leftRetry = retry || 3;
-    if (resp.headers['set-cookie']) {
-        const puus = resp.headers['set-cookie'].join(';;;').match(/__puus=([^;]+)/);
-        if (puus) {
-            if (cookie.match(/__puus=([^;]+)/)[1] != puus[1]) {
-                cookie = cookie.replace(/__puus=[^;]+/, `__puus=${puus[1]}`);
-                await localDb.push(`/quark/${ckey}`, cookie);
-            }
-        }
-    }
+
     if (resp.status === 429 && leftRetry > 0) {
         await delay(1000);
         return await api(url, data, headers, method, leftRetry - 1);
@@ -81,10 +73,10 @@ async function api(url, data, headers, method, retry) {
     return resp.data || {};
 }
 
-async function getShareToken(shareData) {
-    if (!shareTokenCache[shareData.shareId]) {
-        delete shareTokenCache[shareData.shareId];
-        const shareToken = await api(`share/sharepage/token?${pr}`, {
+async function getShareId(shareData) {
+    if (!shareIdCache[shareData.shareCode]) {
+        delete shareIdCache[shareData.shareCode];
+        const shareId = await api(`open/share/checkAccessCode.action?noCache=${Math.random()}&shareCode=${code}&accessCode=${password}`, {
             pwd_id: shareData.shareId,
             passcode: shareData.sharePwd || '',
         });
@@ -99,14 +91,14 @@ const subtitleExts = ['.srt', '.ass', '.scc', '.stl', '.ttml'];
 export async function getFilesByShareUrl(shareInfo) {
     const shareData = typeof shareInfo === 'string' ? getShareData(shareInfo) : shareInfo;
     if (!shareData) return [];
-    await getShareToken(shareData);
-    if (!shareTokenCache[shareData.shareId]) return [];
+    await getShareId(shareData);
+    if (!shareIdCache[shareData.shareCode]) return [];
     const videos = [];
     const subtitles = [];
     const listFile = async function (shareId, folderId, page) {
         const prePage = 200;
         page = page || 1;
-        const listData = await api(`share/sharepage/detail?${pr}&pwd_id=${shareId}&stoken=${encodeURIComponent(shareTokenCache[shareId].stoken)}&pdir_fid=${folderId}&force=0&_page=${page}&_size=${prePage}&_sort=file_type:asc,file_name:asc`, {}, {}, 'get');
+        const listData = await api(`open/share/getShareInfoByCodeV2.action?noCache=${Math.random()}&shareCode=${code}`, {}, {}, 'get');
         if (!listData.data) return [];
         const items = listData.data.list;
         if (!items) return [];
@@ -155,45 +147,7 @@ export async function getFilesByShareUrl(shareInfo) {
 
 const saveFileIdCaches = {};
 
-async function save(shareId, stoken, fileId, fileToken, clean) {
-    await createSaveDir(clean);
-    if (clean) {
-        const saves = Object.keys(saveFileIdCaches);
-        for (const save of saves) {
-            delete saveFileIdCaches[save];
-        }
-    }
-    if (!saveDirId) return null;
-    if (!stoken) {
-        await getShareToken({
-            shareId: shareId,
-        });
-        if (!shareTokenCache[shareId]) return null;
-    }
-    const saveResult = await api(`share/sharepage/save?${pr}`, {
-        fid_list: [fileId],
-        fid_token_list: [fileToken],
-        to_pdir_fid: saveDirId,
-        pwd_id: shareId,
-        stoken: stoken || shareTokenCache[shareId].stoken,
-        pdir_fid: '0',
-        scene: 'link',
-    });
-    if (saveResult.data && saveResult.data.task_id) {
-        let retry = 0;
-        // wait task finish
-        while (true) {
-            const taskResult = await api(`task?${pr}&task_id=${saveResult.data.task_id}&retry_index=${retry}`, {}, {}, 'get');
-            if (taskResult.data && taskResult.data.save_as && taskResult.data.save_as.save_as_top_fids && taskResult.data.save_as.save_as_top_fids.length > 0) {
-                return taskResult.data.save_as.save_as_top_fids[0];
-            }
-            retry++;
-            if (retry > 5) break;
-            await delay(1000);
-        }
-    }
-    return false;
-}
+
 
 export async function getDownload(shareId, stoken, fileId, fileToken, clean) {
     if (!saveFileIdCaches[fileId]) {
@@ -217,7 +171,7 @@ export async function detail(shareUrl) {
         if (shareData) {
             const videos = await getFilesByShareUrl(shareData);
             if (videos.length > 0) {
-                result.from = '夸克网盘-' + shareData.shareId;
+                result.from = '天翼网盘-' + shareData.shareCode;
                 result.url = videos
                         .map((v) => {
                             const ids = [shareData.shareId, v.stoken, v.fid, v.share_fid_token, v.subtitle ? v.subtitle.fid : '', v.subtitle ? v.subtitle.share_fid_token : ''];

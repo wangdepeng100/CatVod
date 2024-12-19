@@ -1,43 +1,42 @@
 import req from './req.js';
 import chunkStream  from './chunk.js';
 import CryptoJS from 'crypto-js';
-import { formatPlayUrl, conversion, lcs, findBestLCS, delay} from './misc.js';
+import { formatPlayUrl, conversion, lcs, findBestLCS, delay, ua } from './misc.js';
 
 export function getShareData(url) {
-    let regex = /https:\/\/pan\.quark\.cn\/s\/([^\\|#/]+)/;
+    let regex = /https:\/\/cloud\.189\.cn\/t\/(\w+)(?:\?password=(\w+))?|
+                  https:\/\/cloud\.189\.cn\/web\/share\?code=(\w+)(?:&password=(\w+))?/;
     let matches = regex.exec(url);
     if (matches) {
         return {
-            shareId: matches[1],
-            folderId: '0',
+            shareCode: match[1] || match[3],
+            passWord: match[2] || match[4] || '',
         };
     }
     return null;
 }
 
-const pr = 'pr=ucpro&fr=pc';
-
 export const baseHeader = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) quark-cloud-drive/2.5.20 Chrome/100.0.4896.160 Electron/18.3.5.4-b478491100 Safari/537.36 Channel/pckk_other_ch',
-    Referer: 'https://pan.quark.cn',
+    'User-Agent': ua,
+    Referer: 'https://cloud.189.cn/',
 };
 
 let localDb = null;
 let ckey = null;
 
-const apiUrl = 'https://drive.quark.cn/1/clouddrive/';
+const apiUrl = 'https://cloud.189.cn/api/';
 export let cookie = '';
 
 const shareTokenCache = {};
 const saveDirName = 'CatVodOpen';
 let saveDirId = null;
 
-export async function initQuark(db, cfg) {
+export async function initTyi(db, cfg) {
     if (cookie) return;
     localDb = db;
     cookie = cfg.cookie;
     ckey = CryptoJS.enc.Hex.stringify(CryptoJS.MD5(cfg.cookie)).toString();
-    const localCfg = await db.getObjectDefault(`/quark`, {});
+    const localCfg = await db.getObjectDefault(`/tyi`, {});
     if (localCfg[ckey]) {
         cookie = localCfg[ckey];
     }

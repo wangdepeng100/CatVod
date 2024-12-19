@@ -26,7 +26,7 @@ let ckey = null;
 
 const apiUrl = 'https://cloud.189.cn/api/';
 export let cookie = '';
-const shareIdCache = {};
+const shareInfoCache = {};
 
 export async function initTyi(db, cfg) {
     if (cookie) return;
@@ -44,6 +44,8 @@ async function api(url, data, headers, method, retry) {
     Object.assign(headers, baseHeader);
     Object.assign(headers, {
         Cookie: cookie || '',
+        Accept: 'application/json;charset=UTF-8',
+        Sign-Type: '1',
     });
     method = method || 'post';
     const resp =
@@ -73,15 +75,23 @@ async function api(url, data, headers, method, retry) {
     return resp.data || {};
 }
 
-async function getShareId(shareData) {
-    if (!shareIdCache[shareData.shareCode]) {
-        delete shareIdCache[shareData.shareCode];
-        const shareId = await api(`open/share/checkAccessCode.action?noCache=${Math.random()}&shareCode=${code}&accessCode=${password}`, {
-            pwd_id: shareData.shareId,
-            passcode: shareData.sharePwd || '',
-        });
-        if (shareToken.data && shareToken.data.stoken) {
-            shareTokenCache[shareData.shareId] = shareToken.data;
+async function getShareInfo(shareData) {
+    if (!shareInfoCache[shareData.shareCode]) {
+        delete shareInfoCache[shareData.shareCode];
+        // 如果 password 不为空，先验证密码
+        if(shareData.password){
+            const checkData = await api(`open/share/checkAccessCode.action?noCache=${Math.random()}&shareCode=${shareData.shareCode}&accessCode=${shareData.password}`);
+            if (checkData.res_code !== 0) {
+                return ;
+            }
+        }
+        //获取分享文件信息
+        const shareInfo = await api(`open/share/getShareInfoByCodeV2.action?noCache=${Math.random()}&shareCode=${shareData.shareCode}`);
+        if (shareInfo) {
+            shareInfoCache[shareData.shareCode] = {
+                shareId: shareInfo.shareId,
+                fileId: shareInfo.fileId
+            }
         }
     }
 }
@@ -91,14 +101,14 @@ const subtitleExts = ['.srt', '.ass', '.scc', '.stl', '.ttml'];
 export async function getFilesByShareUrl(shareInfo) {
     const shareData = typeof shareInfo === 'string' ? getShareData(shareInfo) : shareInfo;
     if (!shareData) return [];
-    await getShareId(shareData);
-    if (!shareIdCache[shareData.shareCode]) return [];
+    await getShareInfo(shareData);
+    if (!shareInfoCache[shareData.shareCode]) return [];
     const videos = [];
     const subtitles = [];
-    const listFile = async function (shareId, folderId, page) {
+    const listFile = async function (shareId, fileId, folderId, page) {
         const prePage = 200;
         page = page || 1;
-        const listData = await api(`open/share/getShareInfoByCodeV2.action?noCache=${Math.random()}&shareCode=${code}`, {}, {}, 'get');
+        const listData = await api(`open/share/listShareDir.action?noCache=${Math.random()}&pageNum=${pageNum}&pageSize=${pageSize}&fileId=${fileId}&shareDirFileId=${fileId}&isFolder=true&shareId=${shareId}&iconOption=5&orderBy=filename&descending=true&accessCode=`, {}, {}, 'get');
         if (!listData.data) return [];
         const items = listData.data.list;
         if (!items) return [];

@@ -105,36 +105,33 @@ export async function getFilesByShareUrl(shareInfo) {
     if (!shareInfoCache[shareData.shareCode]) return [];
     const videos = [];
     const subtitles = [];
-    const listFile = async function (shareId, fileId, folderId, page) {
-        const prePage = 200;
-        page = page || 1;
+    const listFile = async function (shareId, fileId, pageNum) {
+        const pageSize = 200;
+        pageNum = pageNum || 1;
         const listData = await api(`open/share/listShareDir.action?noCache=${Math.random()}&pageNum=${pageNum}&pageSize=${pageSize}&fileId=${fileId}&shareDirFileId=${fileId}&isFolder=true&shareId=${shareId}&iconOption=5&orderBy=filename&descending=true&accessCode=`, {}, {}, 'get');
-        if (!listData.data) return [];
-        const items = listData.data.list;
-        if (!items) return [];
-        const subDir = [];
+        if (!listData.fileListAO) return [];
+        const files = listData.fileListAO.fileList;     
+        const subDir = listData.fileListAO.folderList;
 
-        for (const item of items) {
-            if (item.dir === true) {
-                subDir.push(item);
-            } else if (item.file === true && item.obj_category === 'video') {
-                if (item.size < 1024 * 1024 * 5) continue;
-                item.stoken = shareTokenCache[shareData.shareId].stoken;
-                videos.push(item);
-            } else if (item.type === 'file' && subtitleExts.some((x) => item.file_name.endsWith(x))) {
-                subtitles.push(item);
+        for (const file of files) {
+            if (file.mediaType === 3) {
+                if (file.size < 1024 * 1024 * 5) continue;
+                file.shareId = shareInfoCache[shareData.shareCode].shareId;
+                videos.push(file);
+            } else if (subtitleExts.some((x) => file.name.endsWith(x))) {
+                subtitles.push(file);
             }
         }
 
-        if (page < Math.ceil(listData.metadata._total / prePage)) {
-            const nextItems = await listFile(shareId, folderId, page + 1);
+        if (pageNum < Math.ceil(listData.fileListAO.count / pageSize)) {
+            const nextItems = await listFile(shareId, fileId, pageNum + 1);
             for (const item of nextItems) {
                 items.push(item);
             }
         }
 
         for (const dir of subDir) {
-            const subItems = await listFile(shareId, dir.fid);
+            const subItems = await listFile(shareId, dir.id);
             for (const item of subItems) {
                 items.push(item);
             }
@@ -142,7 +139,7 @@ export async function getFilesByShareUrl(shareInfo) {
 
         return items;
     };
-    await listFile(shareData.shareId, shareData.folderId);
+    await listFile(shareData.shareId, shareData.fileId);
     if (subtitles.length > 0) {
         videos.forEach((item) => {
             var matchSubtitle = findBestLCS(item, subtitles);
@@ -155,21 +152,10 @@ export async function getFilesByShareUrl(shareInfo) {
     return videos;
 }
 
-const saveFileIdCaches = {};
-
-
-
-export async function getDownload(shareId, stoken, fileId, fileToken, clean) {
-    if (!saveFileIdCaches[fileId]) {
-        const saveFileId = await save(shareId, stoken, fileId, fileToken, clean);
-        if (!saveFileId) return null;
-        saveFileIdCaches[fileId] = saveFileId;
-    }
-    const down = await api(`file/download?${pr}`, {
-        fids: [saveFileIdCaches[fileId]],
-    });
-    if (down.data) {
-        return down.data[0];
+export async function getDownload(shareId, fileId) {
+    const down = await api(`portal/getNewVlcVideoPlayUrl.action?noCache=0.617329187255641&dt=1&shareId=${shareId}&fileId=${fileId}&type=4`);
+    if (down) {
+        return down.normal;
     }
     return null;
 }
@@ -184,9 +170,9 @@ export async function detail(shareUrl) {
                 result.from = '天翼网盘-' + shareData.shareCode;
                 result.url = videos
                         .map((v) => {
-                            const ids = [shareData.shareId, v.stoken, v.fid, v.share_fid_token, v.subtitle ? v.subtitle.fid : '', v.subtitle ? v.subtitle.share_fid_token : ''];
+                            const ids = [shareData.shareId, v.id, v.subtitle ? v.subtitle.id : ''];
                             const size = conversion(v.size);
-                            return formatPlayUrl('', ` ${v.file_name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
+                            return formatPlayUrl('', ` ${v.name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
                         })
                         .join('#')
             }

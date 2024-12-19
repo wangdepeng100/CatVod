@@ -1,7 +1,7 @@
 import req from './req.js';
 import chunkStream  from './chunk.js';
 import CryptoJS from 'crypto-js';
-import { formatPlayUrl, conversion, lcs, findBestLCS, delay, ua } from './misc.js';
+import { formatPlayUrl, conversion, lcs, findBestLCS, delay, IOS_UA as ua } from './misc.js';
 
 export function getShareData(url) {
     let regex = /https:\/\/cloud\.189\.cn\/t\/(\w+)(?:\?password=(\w+))?|

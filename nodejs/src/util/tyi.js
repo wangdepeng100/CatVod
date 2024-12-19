@@ -26,10 +26,7 @@ let ckey = null;
 
 const apiUrl = 'https://cloud.189.cn/api/';
 export let cookie = '';
-
 const shareTokenCache = {};
-const saveDirName = 'CatVodOpen';
-let saveDirId = null;
 
 export async function initTyi(db, cfg) {
     if (cookie) return;
@@ -82,47 +79,6 @@ async function api(url, data, headers, method, retry) {
         return await api(url, data, headers, method, leftRetry - 1);
     }
     return resp.data || {};
-}
-
-async function clearSaveDir() {
-    const listData = await api(`file/sort?${pr}&pdir_fid=${saveDirId}&_page=1&_size=200&_sort=file_type:asc,updated_at:desc`, {}, {}, 'get');
-    if (listData.data && listData.data.list && listData.data.list.length > 0) {
-        const del = await api(`file/delete?${pr}`, {
-            action_type: 2,
-            filelist: listData.data.list.map((v) => v.fid),
-            exclude_fids: [],
-        });
-        console.log(del);
-    }
-}
-
-async function createSaveDir(clean) {
-    if (saveDirId) {
-        // 删除所有子文件
-        if (clean) await clearSaveDir();
-        return;
-    }
-    const listData = await api(`file/sort?${pr}&pdir_fid=0&_page=1&_size=200&_sort=file_type:asc,updated_at:desc`, {}, {}, 'get');
-    if (listData.data && listData.data.list)
-        for (const item of listData.data.list) {
-            if (item.file_name === saveDirName) {
-                saveDirId = item.fid;
-                await clearSaveDir();
-                break;
-            }
-        }
-    if (!saveDirId) {
-        const create = await api(`file?${pr}`, {
-            pdir_fid: '0',
-            file_name: saveDirName,
-            dir_path: '',
-            dir_init_lock: false,
-        });
-        console.log(create);
-        if (create.data && create.data.fid) {
-            saveDirId = create.data.fid;
-        }
-    }
 }
 
 async function getShareToken(shareData) {
@@ -239,23 +195,6 @@ async function save(shareId, stoken, fileId, fileToken, clean) {
     return false;
 }
 
-export async function getLiveTranscoding(shareId, stoken, fileId, fileToken) {
-    if (!saveFileIdCaches[fileId]) {
-        const saveFileId = await save(shareId, stoken, fileId, fileToken, true);
-        if (!saveFileId) return null;
-        saveFileIdCaches[fileId] = saveFileId;
-    }
-    const transcoding = await api(`file/v2/play?${pr}`, {
-        fid: saveFileIdCaches[fileId],
-        resolutions: 'normal,low,high,super,2k,4k',
-        supports: 'fmp4',
-    });
-    if (transcoding.data && transcoding.data.video_list) {
-        return transcoding.data.video_list;
-    }
-    return null;
-}
-
 export async function getDownload(shareId, stoken, fileId, fileToken, clean) {
     if (!saveFileIdCaches[fileId]) {
         const saveFileId = await save(shareId, stoken, fileId, fileToken, clean);
@@ -272,7 +211,7 @@ export async function getDownload(shareId, stoken, fileId, fileToken, clean) {
 }
 
 export async function detail(shareUrl) {
-    if (shareUrl.includes('https://pan.quark.cn')) {
+    if (shareUrl.includes('https://cloud.189.cn')) {
         const shareData = getShareData(shareUrl);
         const result = {};
         if (shareData) {
@@ -292,31 +231,23 @@ export async function detail(shareUrl) {
     }
 }
 
-const quarkTranscodingCache = {};
-const quarkDownloadingCache = {};
+const tyiDownloadingCache = {};
 
 export async function proxy(inReq, outResp) {
     const site = inReq.params.site;
     const what = inReq.params.what;
     const shareId = inReq.params.shareId;
     const fileId = inReq.params.fileId;
-    if (site == 'quark') {
+    if (site == 'tyi') {
         let downUrl = '';
         const ids = fileId.split('*');
         const flag = inReq.params.flag;
-        if (what == 'trans') {
-            if (!quarkTranscodingCache[ids[1]]) {
-                quarkTranscodingCache[ids[1]] = (await getLiveTranscoding(shareId, decodeURIComponent(ids[0]), ids[1], ids[2])).filter((t) => t.accessable);
-            }
-            downUrl = quarkTranscodingCache[ids[1]].filter((t) => t.resolution.toLowerCase() == flag)[0].video_info.url;
-            outResp.redirect(downUrl);
-            return;
-        } else {
-            if (!quarkDownloadingCache[ids[1]]) {
+        if (what == 'src') {
+            if (!tyiDownloadingCache[ids[1]]) {
                 const down = await getDownload(shareId, decodeURIComponent(ids[0]), ids[1], ids[2], flag == 'down');
                 if (down) quarkDownloadingCache[ids[1]] = down;
             }
-            downUrl = quarkDownloadingCache[ids[1]].download_url;
+            downUrl = tyiDownloadingCache[ids[1]].download_url;
             if (flag == 'redirect') {
                 outResp.redirect(downUrl);
                 return;
@@ -342,13 +273,9 @@ export async function play(inReq, outResp) {
     const id = inReq.body.id;
     const ids = id.split('*');
     let idx = 0;
-    if (flag.startsWith('夸克网盘')) {
-        const transcoding = (await getLiveTranscoding(ids[0], ids[1], ids[2], ids[3])).filter((t) => t.accessable);
-        quarkTranscodingCache[ids[2]] = transcoding;
+    if (flag.startsWith('天翼网盘')) {
         const urls = [];
-        const p= ['超清','蓝光','高清','标清','普画','极速'];
-        const arr =['4k','2k','super','high','low','normal'];
-        const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/quark';
+        const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/tyi';
         urls.push('代理');
         urls.push(`${proxyUrl}/src/down/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
         urls.push('原画');
@@ -368,11 +295,6 @@ export async function play(inReq, outResp) {
                 subt: `${proxyUrl}/src/subt/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[4]}*${ids[5]}/.bin`,
             };
         }
-        transcoding.forEach((t) => {
-            idx = arr.indexOf(t.resolution);
-            urls.push(p[idx]);
-            urls.push(`${proxyUrl}/trans/${t.resolution.toLowerCase()}/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.mp4`);
-        });
         return result;
     }
 }

@@ -190,14 +190,13 @@ export async function proxy(inReq, outResp) {
     const fileId = inReq.params.fileId;
     if (site == 'tyi') {
         let downUrl = '';
-        const ids = fileId.split('*');
         const flag = inReq.params.flag;
         if (what == 'src') {
-            if (!tyiDownloadingCache[ids[1]]) {
-                const down = await getDownload(shareId, decodeURIComponent(ids[0]), ids[1], ids[2], flag == 'down');
-                if (down) quarkDownloadingCache[ids[1]] = down;
+            if (!tyiDownloadingCache[fileId]) {
+                const down = await getDownload(shareId, fileId);
+                if (down) tyiDownloadingCache[fileId] = down;
             }
-            downUrl = tyiDownloadingCache[ids[1]].download_url;
+            downUrl = tyiDownloadingCache[fileId].url;
             if (flag == 'redirect') {
                 outResp.redirect(downUrl);
                 return;
@@ -207,7 +206,7 @@ export async function proxy(inReq, outResp) {
             inReq,
             outResp,
             downUrl,
-            ids[1],
+            fileId,
             Object.assign(
                 {
                     Cookie: cookie,
@@ -227,9 +226,9 @@ export async function play(inReq, outResp) {
         const urls = [];
         const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/tyi';
         urls.push('代理');
-        urls.push(`${proxyUrl}/src/down/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
+        urls.push(`${proxyUrl}/src/down/${ids[0]}/{ids[1]}/.bin`);
         urls.push('原画');
-        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[2]}*${ids[3]}/.bin`);
+        urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${ids[1]}/.bin`);
         const result = {
             parse: 0,
             url: urls,
@@ -240,9 +239,9 @@ export async function play(inReq, outResp) {
                 baseHeader,
             ),
         };
-        if (ids[3]) {
+        if (ids[2]) {
             result.extra = {
-                subt: `${proxyUrl}/src/subt/${ids[0]}/${encodeURIComponent(ids[1])}*${ids[4]}*${ids[5]}/.bin`,
+                subt: `${proxyUrl}/src/subt/${ids[0]}/${ids[2]}/.bin`,
             };
         }
         return result;

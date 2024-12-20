@@ -4,6 +4,7 @@ import * as HLS from 'hls-parser';
 import * as Ali from './ali.js';
 import * as Quark from './quark.js';
 import * as UC from './uc.js';
+import * as Tyi from './tyi.js';
 import dayjs from 'dayjs';
 
 export { isEmpty };
@@ -11,12 +12,13 @@ export const ua = IOS_UA;
 export const Qpic = 'https://img.omii.top/i/2024/03/17/vqmr8m.webp';
 export const Upic = 'https://img.omii.top/i/2024/03/17/vqmr8m.webp';
 export const Apic = 'https://img.omii.top/i/2024/03/17/vqn6em.webp';
-
+export const Tpic = 'https://img.omii.top/i/2024/03/17/vqn6em.webp';
 
 export async function init(inReq, _outResp) {
     await Ali.initAli(inReq.server.db, inReq.server.config.ali);
     await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
     await UC.initUC(inReq.server.db, inReq.server.config.uc);
+    await Tyi.initUC(inReq.server.db, inReq.server.config.tyi);
     return{};
 }
 
@@ -43,7 +45,12 @@ export async function detail(shareUrls) {
                     froms.push(data.from);
                     urls.push(data.url);
                 }
-            }
+            } else if (shareUrl.includes('https://cloud.189.cn')) {
+                const data = await Tyi.detail(shareUrl);
+                if(data){
+                    froms.push(data.from);
+                    urls.push(data.url);
+                }
         }
 
         return {
@@ -60,6 +67,8 @@ export async function proxy(inReq, _outResp) {
         return await Quark.proxy(inReq, _outResp);
     } else if (site == 'uc') {
         return await UC.proxy(inReq, _outResp);
+    } else if (site == 'tyi') {
+        return await Tyi.proxy(inReq, _outResp);
     }
 }
 
@@ -71,6 +80,8 @@ export async function play(inReq, _outResp) {
         return await Quark.play(inReq, _outResp);
     } else if (flag.startsWith('UC网盘')) {
         return await UC.play(inReq, _outResp);
+    } else if (flag.startsWith('天翼网盘')) {
+        return await Tyi.play(inReq, _outResp);
     }
 }
 

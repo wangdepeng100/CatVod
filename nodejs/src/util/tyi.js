@@ -4,8 +4,7 @@ import CryptoJS from 'crypto-js';
 import { formatPlayUrl, conversion, lcs, findBestLCS, delay, IOS_UA as ua } from './misc.js';
 
 export function getShareData(url) {
-    let regex = /https:\/\/cloud\.189\.cn\/t\/(\w+)(?:\?password=(\w+))?|
-                  https:\/\/cloud\.189\.cn\/web\/share\?code=(\w+)(?:&password=(\w+))?/;
+    let regex = /https:\/\/cloud\.189\.cn\/t\/(\w+)(?:\?password=(\w+))?|https:\/\/cloud\.189\.cn\/web\/share\?code=(\w+)(?:&password=(\w+))?/;
     let matches = regex.exec(url);
     if (matches) {
         return {

@@ -44,7 +44,7 @@ async function api(url, data, headers, method, retry) {
     Object.assign(headers, {
         Cookie: cookie || '',
         Accept: 'application/json;charset=UTF-8',
-        Sign-Type: '1',
+        'Sign-Type': '1'
     });
     method = method || 'post';
     const resp =

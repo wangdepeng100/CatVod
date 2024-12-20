@@ -67,7 +67,7 @@ async function api(url, data, headers, method, retry) {
                   });
     const leftRetry = retry || 3;
 
-    if (resp.status === 429 && leftRetry > 0) {
+    if (resp.status === 500 && leftRetry > 0) {
         await delay(1000);
         return await api(url, data, headers, method, leftRetry - 1);
     }
@@ -166,7 +166,7 @@ export async function detail(shareUrl) {
                 result.from = '天翼网盘-' + shareData.shareCode;
                 result.url = videos
                         .map((v) => {
-                            const ids = [shareData.shareId, v.id, v.subtitle ? v.subtitle.id : ''];
+                            const ids = [v.shareId, v.id, v.subtitle ? v.subtitle.id : ''];
                             const size = conversion(v.size);
                             return formatPlayUrl('', ` ${v.name.replace(/.[^.]+$/,'')}  [${size}]`) + '$' + ids.join('*');
                         })

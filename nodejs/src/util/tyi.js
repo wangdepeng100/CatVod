@@ -222,7 +222,7 @@ export async function play(inReq, outResp) {
         const urls = [];
         const proxyUrl = inReq.server.address().url + inReq.server.prefix + '/proxy/tyi';
         urls.push('代理');
-        urls.push(`${proxyUrl}/src/down/${ids[0]}/{ids[1]}/.bin`);
+        urls.push(`${proxyUrl}/src/down/${ids[0]}/${ids[1]}/.bin`);
         urls.push('原画');
         urls.push(`${proxyUrl}/src/redirect/${ids[0]}/${ids[1]}/.bin`);
         const result = {

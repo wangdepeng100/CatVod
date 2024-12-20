@@ -8,8 +8,8 @@ export function getShareData(url) {
     let matches = regex.exec(url);
     if (matches) {
         return {
-            shareCode: match[1] || match[3],
-            accessCode: match[2] || match[4] || '',
+            shareCode: matches[1] || matches[3],
+            accessCode: matches[2] || matches[4] || '',
         };
     }
     return null;

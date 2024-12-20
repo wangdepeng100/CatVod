@@ -67,7 +67,7 @@ async function api(url, data, headers, method, retry) {
                   });
     const leftRetry = retry || 3;
 
-    if (resp.status === 500 && leftRetry > 0) {
+    if (resp.status != 200 && leftRetry > 0) {
         await delay(1000);
         return await api(url, data, headers, method, leftRetry - 1);
     }

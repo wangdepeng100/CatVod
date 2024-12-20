@@ -54,7 +54,7 @@ async function detail(inReq, _outResp) {
     const ids = !Array.isArray(inReq.body.id) ? [inReq.body.id] : inReq.body.id;
     let shareUrls = ids;
     const videos = [];
-    const regex = new RegExp('/s/');
+    const regex = new RegExp('/[s,t]/');
     for (const id of ids) {
         let vod = {
                 vod_id: id,

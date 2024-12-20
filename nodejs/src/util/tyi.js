@@ -10,7 +10,7 @@ export function getShareData(url) {
     if (matches) {
         return {
             shareCode: match[1] || match[3],
-            password: match[2] || match[4] || '',
+            accessCode: match[2] || match[4] || '',
         };
     }
     return null;
@@ -78,9 +78,9 @@ async function api(url, data, headers, method, retry) {
 async function getShareInfo(shareData) {
     if (!shareInfoCache[shareData.shareCode]) {
         delete shareInfoCache[shareData.shareCode];
-        // 如果 password 不为空，先验证密码
-        if(shareData.password){
-            const checkData = await api(`open/share/checkAccessCode.action?noCache=${Math.random()}&shareCode=${shareData.shareCode}&accessCode=${shareData.password}`);
+        // 验证密码
+        if(shareData.accessCode){
+            const checkData = await api(`open/share/checkAccessCode.action?noCache=${Math.random()}&shareCode=${shareData.shareCode}&accessCode=${shareData.accessCode}`);
             if (checkData.res_code !== 0) {
                 return ;
             }
@@ -90,7 +90,9 @@ async function getShareInfo(shareData) {
         if (shareInfo) {
             shareInfoCache[shareData.shareCode] = {
                 shareId: shareInfo.shareId,
-                fileId: shareInfo.fileId
+                fileId: shareInfo.fileId,
+                shareMode: shareInfo.shareMode,
+                isFolder: shareInfo.isFolder
             }
         }
     }
@@ -106,9 +108,12 @@ export async function getFilesByShareUrl(shareInfo) {
     const videos = [];
     const subtitles = [];
     const listFile = async function (shareId, fileId, pageNum) {
-        const pageSize = 200;
+        const pageSize = 60;
         pageNum = pageNum || 1;
-        const listData = await api(`open/share/listShareDir.action?noCache=${Math.random()}&pageNum=${pageNum}&pageSize=${pageSize}&fileId=${fileId}&shareDirFileId=${fileId}&isFolder=true&shareId=${shareId}&iconOption=5&orderBy=filename&descending=true&accessCode=`, {}, {}, 'get');
+        const isFolder = shareInfoCache[shareData.shareCode].isFolder;
+        const shareMode = shareInfoCache[shareData.shareCode].shareMode;
+        const accessCode = shareData.accessCode;
+        const listData = await api(`open/share/listShareDir.action?noCache=${Math.random()}&pageNum=${pageNum}&pageSize=${pageSize}&fileId=${fileId}&shareDirFileId=${fileId}&isFolder=${isFolder}&shareId=${shareId}&iconOption=5&orderBy=filename&descending=true&accessCode=${accessCode}&shareMode=${shareMode}`, {}, {}, 'get');
         if (!listData.fileListAO) return [];
         const files = listData.fileListAO.fileList;     
         const subDir = listData.fileListAO.folderList;

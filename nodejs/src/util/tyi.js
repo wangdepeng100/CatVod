@@ -23,7 +23,7 @@ export const baseHeader = {
 let localDb = null;
 let ckey = null;
 
-const apiUrl = 'https://cloud.189.cn/api/';
+const apiUrl = 'https://cloud.189.cn/api';
 export let cookie = '';
 const shareInfoCache = {};
 
@@ -107,7 +107,7 @@ export async function getFilesByShareUrl(shareInfo) {
     const videos = [];
     const subtitles = [];
     const listFile = async function (shareId, fileId, pageNum) {
-        const pageSize = 60;
+        const pageSize = 200;
         pageNum = pageNum || 1;
         const isFolder = shareInfoCache[shareData.shareCode].isFolder;
         const shareMode = shareInfoCache[shareData.shareCode].shareMode;
@@ -115,7 +115,7 @@ export async function getFilesByShareUrl(shareInfo) {
         const listData = await api(`open/share/listShareDir.action?noCache=${Math.random()}&pageNum=${pageNum}&pageSize=${pageSize}&fileId=${fileId}&shareDirFileId=${fileId}&isFolder=${isFolder}&shareId=${shareId}&iconOption=5&orderBy=filename&descending=true&accessCode=${accessCode}&shareMode=${shareMode}`, {}, {}, 'get');
         if (!listData.fileListAO) return [];
         const files = listData.fileListAO.fileList;     
-        const subDir = listData.fileListAO.folderList;
+        const folders = listData.fileListAO.folderList;
 
         for (const file of files) {
             if (file.mediaType === 3) {
@@ -127,23 +127,15 @@ export async function getFilesByShareUrl(shareInfo) {
             }
         }
 
+        for (const folder of folders) {
+            await listFile(shareId, folder.id);
+        }
+        
         if (pageNum < Math.ceil(listData.fileListAO.count / pageSize)) {
-            const nextItems = await listFile(shareId, fileId, pageNum + 1);
-            for (const item of nextItems) {
-                items.push(item);
-            }
+            await listFile(shareId, fileId, pageNum + 1);
         }
-
-        for (const dir of subDir) {
-            const subItems = await listFile(shareId, dir.id);
-            for (const item of subItems) {
-                items.push(item);
-            }
-        }
-
-        return items;
     };
-    await listFile(shareData.shareId, shareData.fileId);
+    await listFile(shareInfoCache[shareData.shareCode].shareId, shareInfoCache[shareData.shareCode].fileId);
     if (subtitles.length > 0) {
         videos.forEach((item) => {
             var matchSubtitle = findBestLCS(item, subtitles);

@@ -51,6 +51,7 @@ export async function detail(shareUrls) {
                     froms.push(data.from);
                     urls.push(data.url);
                 }
+            }
         }
 
         return {

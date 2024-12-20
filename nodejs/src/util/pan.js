@@ -18,7 +18,7 @@ export async function init(inReq, _outResp) {
     await Ali.initAli(inReq.server.db, inReq.server.config.ali);
     await Quark.initQuark(inReq.server.db, inReq.server.config.quark);
     await UC.initUC(inReq.server.db, inReq.server.config.uc);
-    await Tyi.initUC(inReq.server.db, inReq.server.config.tyi);
+    await Tyi.initTyi(inReq.server.db, inReq.server.config.tyi);
     return{};
 }
 
